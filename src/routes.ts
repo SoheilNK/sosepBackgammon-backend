@@ -6,37 +6,37 @@ export const Routes = [{
     //Get all users
     method: "get",
     route: "/api/users",
+    middlewares: [checkJwt, checkRole(["ADMIN"])],
     controller: UserController,
     action: "all",
-    middlewares: [checkJwt, checkRole(["ADMIN"])]
 }, {
     // Get one user
     method: "get",
     route: "/api/users/:id([0-9]+)",
+    middlewares: [checkJwt, checkRole(["ADMIN"])],
     controller: UserController,
     action: "one",
-    middlewares: [checkJwt, checkRole(["ADMIN"])]
 }, {
     //Create a new user
     method: "post",
     route: "/api/users/",
+    middlewares: [checkJwt, checkRole(["ADMIN"])],
     controller: UserController,
     action: "save",
-    middlewares: [checkJwt, checkRole(["ADMIN"])]
 }, {
     //Edit one user
     method: "put", // or patch
     route: "/api/users/:id([0-9]+)",
+    middlewares: [checkJwt, checkRole(["ADMIN"])],
     controller: UserController,
     action: "edit",
-    middlewares: [checkJwt, checkRole(["ADMIN"])]
 }, {
     //Delete one user
     method: "delete",
     route: "/api/users/:id([0-9]+)",
+    middlewares: [checkJwt, checkRole(["ADMIN"])],
     controller: UserController,
     action: "remove",
-    middlewares: [checkJwt, checkRole(["ADMIN"])]
 }, {
     //Login route
     method: "post",
@@ -47,7 +47,7 @@ export const Routes = [{
     //Change my password
     method: "post",
     route: "/api/change-password",
+    middlewares: [checkJwt],
     controller: AuthController,
     action: "changePassword",
-    middlewares: [checkJwt]
 }]
