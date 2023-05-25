@@ -12,11 +12,13 @@ export const Routes = [{
     route: "/api/users",
     middlewares: [checkJwt, checkRole(["ADMIN"])],
     controller: UserController,
+
     action: "all",
 }, {
     // Get one user
     method: "get",
-    route: "/api/users/:id([0-9]+)",
+    // route: "/api/users/id/:id([0-9]+)",
+    route: "/api/user/:id([0-9]+)",
     middlewares: [checkJwt, checkRole(["ADMIN"])],
     controller: UserController,
     action: "one",

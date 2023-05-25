@@ -3,6 +3,8 @@
    "version": "0.0.1",
    "description": "This is the endpoint for the SosepBackgammon project",
    "type": "commonjs",
+   "author": "Soheil Najmabadi Kia",
+   "license": "GPL v3",
    "devDependencies": {
       "@types/node": "^16.11.10",
       "ts-node": "10.7.0",
@@ -32,6 +34,6 @@
       "tsc": "tsc",
       "start": "set debug=* && ts-node-dev --respawn --transpile-only ./src/index.ts",
       "prod": "tsc && node ./build/app.js",
-      "migration:run": "ts-node ./node_modules/typeorm/cli.js migration:run -d ./src/data-source"
+      "migration:run": "ts-node ./node_modules/typeorm/cli.js migration:run -d ./src/data-source.ts"
    }
 }
