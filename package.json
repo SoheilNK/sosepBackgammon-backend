@@ -1,7 +1,7 @@
 {
-   "name": "sosepBackgammon-endpoint",
+   "name": "sosepbackgammon-endpoint",
    "version": "0.0.1",
-   "description": "Awesome project developed with TypeORM.",
+   "description": "This is the endpoint for the SosepBackgammon project",
    "type": "commonjs",
    "devDependencies": {
       "@types/node": "^16.11.10",
@@ -28,7 +28,10 @@
       "typeorm": "0.3.16"
    },
    "scripts": {
-      "start": "ts-node src/index.ts",
-      "typeorm": "typeorm-ts-node-commonjs"
+      "typeorm": "typeorm-ts-node-commonjs",
+      "tsc": "tsc",
+      "start": "set debug=* && ts-node-dev --respawn --transpile-only ./src/index.ts",
+      "prod": "tsc && node ./build/app.js",
+      "migration:run": "ts-node ./node_modules/typeorm/cli.js migration:run -d ./src/data-source"
    }
 }

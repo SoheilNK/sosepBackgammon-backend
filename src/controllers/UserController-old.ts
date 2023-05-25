@@ -44,7 +44,7 @@ export class UserController {
             role: role
         })
 
-        //Validade if the parameters are ok
+        //Validate if the parameters are ok
         const errors = await validate(user);
         if (errors.length > 0) {
             return errors
@@ -66,6 +66,47 @@ export class UserController {
         return "user created"
     }
 
+    async edit(request: Request, response: Response, next: NextFunction) {
+        //Get the ID from the url
+        const id = parseInt(request.params.id)
+
+        //Get values from the body
+        const { username, role } = request.body;
+
+        //Try to find user on database
+        let user;
+        try {
+            user = await this.userRepository.findOneOrFail({
+                where: { id },
+            })
+        } catch (error) {
+            //If not found, send a 404 response
+            response.status(404).send("User not found");
+            return "user not found"
+        }
+
+        //Validate the new values on model
+        user.username = username;
+        user.role = role;
+        const errors = await validate(user);
+        if (errors.length > 0) {
+            response.status(400).send(errors);
+            return "error"
+        }
+
+        //Try to save, if fails, that means username already in use
+        try {
+            await this.userRepository.save(user);
+        } catch (e) {
+            response.status(409).send("username already in use");
+            return "username already in use"
+        }
+        //After all send a 204 (no content, but accepted) response
+        response.status(204).send();
+        return "user updated"
+     }
+
+
 
 
     async remove(request: Request, response: Response, next: NextFunction) {
@@ -74,10 +115,13 @@ export class UserController {
         let userToRemove = await this.userRepository.findOneBy({ id })
 
         if (!userToRemove) {
+            response.status(404).send("User not found");
             return "this user not exist"
         }
 
         await this.userRepository.remove(userToRemove)
+        //After all send a 204 (no content, but accepted) response
+        response.status(204).send();
 
         return "user has been removed"
     }

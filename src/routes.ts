@@ -1,6 +1,10 @@
-import { UserController, AuthController } from "./controllers/UserController"
-import { checkJwt } from "../middlewares/checkJwt";
-import { checkRole } from "../middlewares/checkRole";
+import { checkJwt } from "./middlewares/checkJwt";
+import { checkRole } from "./middlewares/checkRole";
+import { UserController } from "./controllers/UserController";
+import { AuthController } from "./controllers/AuthController";
+
+
+
 
 export const Routes = [{
     //Get all users
@@ -42,8 +46,9 @@ export const Routes = [{
     method: "post",
     route: "/api/login",
     controller: AuthController,
-    action: "login"
-}, {
+    action: "login",
+    
+    }, {
     //Change my password
     method: "post",
     route: "/api/change-password",

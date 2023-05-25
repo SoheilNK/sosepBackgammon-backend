@@ -7,7 +7,7 @@ import { User } from "../entity/User";
 import config from "../config/config";
 import { AppDataSource } from "../data-source";
 
-class AuthController {
+export class AuthController {
     static login = async (req: Request, res: Response) => {
         //Check if username and password are set
         let { username, password } = req.body;
@@ -81,4 +81,3 @@ class AuthController {
         res.status(204).send();
     };
 }
-export default AuthController;
