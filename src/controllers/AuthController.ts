@@ -1,5 +1,5 @@
 
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import * as jwt from "jsonwebtoken";
 import { validate } from "class-validator";
 
@@ -8,76 +8,77 @@ import config from "../config/config";
 import { AppDataSource } from "../data-source";
 
 export class AuthController {
-    static login = async (req: Request, res: Response) => {
+
+    private userRepository = AppDataSource.getRepository(User);
+
+    async login(request: Request, response: Response, next: NextFunction) {
         //Check if username and password are set
-        let { username, password } = req.body;
+        let { username, password } = request.body;
         if (!(username && password)) {
-            res.status(400).send();
+            response.status(400).send('No username or password received');
         }
 
         //Get user from database
-        const userRepository = AppDataSource.getRepository(User)
-
         let user: User;
         try {
-            user = await userRepository.findOneOrFail({ where: { username } });
+            user = await this.userRepository.findOneOrFail({ where: { username } });
         } catch (error) {
-            res.status(401).send();
+            response.status(401).send();
         }
 
-        //Check if encrypted password match
+        //Check if encrypted password matches
         if (!user.checkIfUnencryptedPasswordIsValid(password)) {
-            res.status(401).send();
+            response.status(401).send("username or password is incorrect");
             return;
         }
 
-        //Sing JWT, valid for 1 hour
+        //Sign JWT, valid for 1 hour
         const token = jwt.sign(
             { userId: user.id, username: user.username },
             config.jwtSecret,
             { expiresIn: "1h" }
         );
 
-        //Send the jwt in the response
-        res.send(token);
-    };
+        //Send the JWT in the response
+        response.send(token);
+    }
 
-    static changePassword = async (req: Request, res: Response) => {
+    async changePassword(request: Request, response: Response, next: NextFunction) {
         //Get ID from JWT
-        const id = res.locals.jwtPayload.userId;
+        const id = response.locals.jwtPayload.userId;
 
         //Get parameters from the body
-        const { oldPassword, newPassword } = req.body;
+        const { oldPassword, newPassword } = request.body;
         if (!(oldPassword && newPassword)) {
-            res.status(400).send();
+            response.status(400).send();
         }
 
         //Get user from the database
-        const userRepository = AppDataSource.getRepository(User);
         let user: User;
         try {
-            user = await userRepository.findOneOrFail(id);
-        } catch (id) {
-            res.status(401).send();
+            user = await this.userRepository.findOneOrFail(id);
+        } catch (error) {
+            response.status(401).send();
         }
 
-        //Check if old password matchs
+        //Check if the old password matches
         if (!user.checkIfUnencryptedPasswordIsValid(oldPassword)) {
-            res.status(401).send();
+            response.status(401).send();
             return;
         }
 
-        //Validate de model (password lenght)
+        //Validate the model (password length)
         user.password = newPassword;
         const errors = await validate(user);
         if (errors.length > 0) {
-            res.status(400).send(errors);
+            response.status(400).send(errors);
             return;
         }
+
         //Hash the new password and save
         user.hashPassword();
-        userRepository.save(user);
+        await this.userRepository.save(user);
 
-        res.status(204).send();
-    };
+        response.status(204).send();
+    }
 }

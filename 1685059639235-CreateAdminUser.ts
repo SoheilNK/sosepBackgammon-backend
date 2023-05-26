@@ -3,7 +3,7 @@ import { User } from "./src/entity/User";
 import { AppDataSource } from "./src/data-source";
 import * as bcrypt from "bcryptjs";
 
-export class CreateAdminUser1684977083279 implements MigrationInterface {
+export class CreateAdminUser1685059639235 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         const userRepository = AppDataSource.getRepository(User);
@@ -21,6 +21,7 @@ export class CreateAdminUser1684977083279 implements MigrationInterface {
                 })
             )
         }
+
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
