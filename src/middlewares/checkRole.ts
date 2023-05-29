@@ -16,12 +16,13 @@ export const checkRole = (roles: Array<string>) => {
             user = await userRepository.findOneOrFail(
                 { where: { id } }
             );
+            //Check if array of authorized roles includes the user's role
+            if (roles.indexOf(user.role) > -1) next();
+            else res.status(401).send('unauthorized role');
+
         } catch (id) {
             res.status(401).send(`unauthorized userID ${id} role not found in database`);
         }
 
-        //Check if array of authorized roles includes the user's role
-        if (roles.indexOf(user.role) > -1) next();
-        else res.status(401).send('unauthorized role');
     };
 };

@@ -22,13 +22,6 @@ export const Routes = [{
     controller: UserController,
     action: "one",
 }, {
-    //Create a new user--
-    method: "post",
-    route: "/api/users/",
-    middlewares: [checkJwt, checkRole(["ADMIN"])],
-    controller: UserController,
-    action: "save",
-}, {
     //Edit one user--
     method: "put", // or patch
     route: "/api/users/:id([0-9]+)",
@@ -43,13 +36,20 @@ export const Routes = [{
     controller: UserController,
     action: "remove",
 }, {
+    //Create a new user--
+    method: "post",
+    route: "/api/auth/signup",
+    middlewares: [checkJwt, checkRole(["ADMIN"])],
+    controller: AuthController,
+    action: "signup",
+}, {
     //Login route--
     method: "post",
-    route: "/api/login/",
+    route: "/api/auth/signin",
     controller: AuthController,
-    action: "login",
-    
-    }, {
+    action: "signin",
+
+}, {
     //Change my password
     method: "post",
     route: "/api/change-password/",

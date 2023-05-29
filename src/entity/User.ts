@@ -25,6 +25,11 @@ export class User {
 
     @Column()
     @IsNotEmpty()
+    email: string;
+
+
+    @Column()
+    @IsNotEmpty()
     role: string;
 
     @Column()

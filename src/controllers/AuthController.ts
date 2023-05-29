@@ -11,7 +11,30 @@ export class AuthController {
 
     private userRepository = AppDataSource.getRepository(User);
 
-    async login(request: Request, response: Response, next: NextFunction) {
+    async signup(request: Request, response: Response, next: NextFunction) {
+        const { username, password, email } = request.body;
+
+        const user = Object.assign(new User(), {
+            username: username,
+            email: email,
+            password: password,
+        });
+
+        try {
+            const errors = await validate(user);
+            if (errors.length > 0) {
+                response.status(400).send(errors);
+            } else {
+                user.hashPassword();
+                await this.userRepository.save(user);
+                response.status(201).send("User created");
+            }
+        } catch (error) {
+            response.status(409).send("Username already in use");
+        }
+    }
+
+    async signin(request: Request, response: Response, next: NextFunction) {
         let { username, password } = request.body;
 
         if (!(username && password)) {
@@ -21,9 +44,11 @@ export class AuthController {
 
         try {
             let user = await this.userRepository.findOneOrFail({ where: { username } });
-
+            if (!user) {
+                return response.status(404).send({ message: "User Not found." });
+            }
             if (!user.checkIfUnencryptedPasswordIsValid(password)) {
-                response.status(401).send("Username or password is incorrect");
+                response.status(401).send("Invalid Password!");
                 return;
             }
 
@@ -33,7 +58,13 @@ export class AuthController {
                 { expiresIn: "1h" }
             );
 
-            response.send(token);
+            response.status(200).send({
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+                accessToken: token
+            });
         } catch (error) {
             response.status(401).send("Unauthorized");
         }
@@ -50,7 +81,7 @@ export class AuthController {
         }
 
         try {
-            let user = await this.userRepository.findOneOrFail({where : {id}});
+            let user = await this.userRepository.findOneOrFail({ where: { id } });
 
             if (!user.checkIfUnencryptedPasswordIsValid(oldPassword)) {
                 response.status(401).send("Invalid old password");
@@ -61,13 +92,12 @@ export class AuthController {
             const errors = await validate(user);
             if (errors.length > 0) {
                 response.status(400).send(errors);
-                return;
             }
 
             user.hashPassword();
             await this.userRepository.save(user);
 
-            response.status(204).send();
+            response.status(204).send("Password changed successfully");
         } catch (error) {
             response.status(401).send("Unauthorized");
         }
