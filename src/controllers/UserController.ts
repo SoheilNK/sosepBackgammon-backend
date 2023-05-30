@@ -15,7 +15,7 @@ export class UserController {
             return users;
 
         } catch (error) {
-            response.status(404).send("Users not found");
+            response.status(404).send({ message: "Users not found" });
             return error
         }
     }
@@ -33,7 +33,7 @@ export class UserController {
             return user
 
         } catch (error) {
-            response.status(404).send("User not found");
+            response.status(404).send({ message: "User not found" });
         }
     }
     
@@ -53,10 +53,10 @@ export class UserController {
                 response.status(400).send(errors);
             } else {
                 await this.userRepository.save(user);
-                response.status(204).send("User updated");
+                response.status(204).send({ message: "User updated" });
             }
         } catch (error) {
-            response.status(404).send("User not found");
+            response.status(404).send({ message: "User not found" });
         }
     }
 
@@ -68,13 +68,13 @@ export class UserController {
             let userToRemove = await this.userRepository.findOne({ where: { id } });
 
             if (!userToRemove) {
-                response.status(404).send("User not found");
+                response.status(404).send({ message: "User not found" });
             } else {
                 await this.userRepository.remove(userToRemove);
-                response.status(204).send("User has been removed");
+                response.status(204).send({ message: "User has been removed" });
             }
         } catch (error) {
-            response.status(500).send("An error occurred while removing the user");
+            response.status(500).send({ message: "An error occurred while removing the user" });
         }
     }
 

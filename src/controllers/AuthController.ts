@@ -18,6 +18,7 @@ export class AuthController {
             username: username,
             email: email,
             password: password,
+            role: "USER"
         });
 
         try {
@@ -27,10 +28,12 @@ export class AuthController {
             } else {
                 user.hashPassword();
                 await this.userRepository.save(user);
-                response.status(201).send("User created");
+                response.status(201).send({
+                    message: "You have successfully registered\nPlease sign in to continue"
+                });
             }
         } catch (error) {
-            response.status(409).send("Username already in use");
+            response.status(409).send({ message: "Username already in use" });
         }
     }
 
@@ -38,7 +41,7 @@ export class AuthController {
         let { username, password } = request.body;
 
         if (!(username && password)) {
-            response.status(400).send("No username or password received");
+            response.status(400).send({ message: "No username or password received" });
             return;
         }
 
@@ -48,7 +51,7 @@ export class AuthController {
                 return response.status(404).send({ message: "User Not found." });
             }
             if (!user.checkIfUnencryptedPasswordIsValid(password)) {
-                response.status(401).send("Invalid Password!");
+                response.status(401).send({ message: "Invalid Password!" });
                 return;
             }
 
@@ -66,7 +69,7 @@ export class AuthController {
                 accessToken: token
             });
         } catch (error) {
-            response.status(401).send("Unauthorized");
+            response.status(401).send({ message: "Unauthorized" });
         }
     }
 
@@ -76,7 +79,7 @@ export class AuthController {
         const { oldPassword, newPassword } = request.body;
 
         if (!(oldPassword && newPassword)) {
-            response.status(400).send("Missing old or new password");
+            response.status(400).send({ message: "Missing old or new password" });
             return;
         }
 
@@ -84,7 +87,7 @@ export class AuthController {
             let user = await this.userRepository.findOneOrFail({ where: { id } });
 
             if (!user.checkIfUnencryptedPasswordIsValid(oldPassword)) {
-                response.status(401).send("Invalid old password");
+                response.status(401).send({ message: "Invalid old password" });
                 return;
             }
 
@@ -97,9 +100,9 @@ export class AuthController {
             user.hashPassword();
             await this.userRepository.save(user);
 
-            response.status(204).send("Password changed successfully");
+            response.status(204).send({ message: "Password changed successfully" });
         } catch (error) {
-            response.status(401).send("Unauthorized");
+            response.status(401).send({ message: "Unauthorized" });
         }
     }
 

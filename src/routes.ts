@@ -39,7 +39,7 @@ export const Routes = [{
     //Create a new user--
     method: "post",
     route: "/api/auth/signup",
-    middlewares: [checkJwt, checkRole(["ADMIN"])],
+    // middlewares: [checkJwt],
     controller: AuthController,
     action: "signup",
 }, {
