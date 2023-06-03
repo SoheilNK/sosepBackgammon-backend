@@ -1,0 +1,20 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-sosepbackgammonbacke-dev-190216-authRole",
+      "UnauthRoleArn": "arn:aws:iam::008826581554:role/amplify-sosepbackgammonbacke-dev-190216-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::008826581554:role/amplify-sosepbackgammonbacke-dev-190216-authRole",
+      "Region": "ca-central-1",
+      "DeploymentBucketName": "amplify-sosepbackgammonbacke-dev-190216-deployment",
+      "UnauthRoleName": "amplify-sosepbackgammonbacke-dev-190216-unauthRole",
+      "StackName": "amplify-sosepbackgammonbacke-dev-190216",
+      "StackId": "arn:aws:cloudformation:ca-central-1:008826581554:stack/amplify-sosepbackgammonbacke-dev-190216/f3dd9b60-018c-11ee-9bda-02ff118f0120",
+      "AmplifyAppId": "d1jqa9oo3p792f"
+    },
+    "categories": {
+      "auth": {
+        "sosepbackgammonbacked660e4fa": {}
+      }
+    }
+  }
+}
