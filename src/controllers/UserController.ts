@@ -2,10 +2,59 @@ import { AppDataSource } from "../data-source"
 import { NextFunction, Request, Response } from "express"
 import { User } from "../entity/User"
 import { validate } from "class-validator";
+import * as jwt from "jsonwebtoken";
+import * as jwkToPem from "jwk-to-pem";
+import fetch from 'node-fetch';
+
+
+
+// import axois from 'axios';
 
 export class UserController {
 
     private userRepository = AppDataSource.getRepository(User)
+
+    // getOpenIdConfig = async () => {
+    //     // const openIdConfigUrl = `https://cognito-idp.${process.env.AWS_REGION}.amazonaws.com/${process.env.USER_POOL_ID}/.well-known/openid-configuration`;
+    //     const openIdConfigUrl = `https://cognito-idp.${process.env.AWS_REGION}.amazonaws.com/${process.env.USER_POOL_ID}/.well-known/openid-configuration`;
+    //     const openIdConfigResponse = await fetch(openIdConfigUrl);
+    //     const openIdJson = await openIdConfigResponse.json() as {
+    //         jwks_uri: string;
+    //     };
+
+    //     const jwksResponse = await fetch(openIdJson.jwks_uri);
+    //     const jwks = await jwksResponse.json();
+
+
+    //     return {
+    //         openIdJson,
+    //         jwks,
+    //     };
+    // }
+
+    // //check signature of token and return user ID if valid
+    // // Assuming the class containing this method is named "YourClass"
+    // async checktoken(request: Request, response: Response, next: NextFunction) {
+    //     const auth_token = request.headers.authorization.split("Bearer ")[1] as string;
+    //     const openIdConfig = await this.getOpenIdConfig() as { openIdJson: { jwks_uri: string; }; jwks: { keys: { kid: string; }[]; }; };
+
+    //     // Get the jwk used for the signature
+    //     const decoded = jwt.decode(auth_token, { complete: true }) as { header: jwt.JwtHeader; payload: jwt.JwtPayload };
+    //     const jwk = openIdConfig.jwks.keys.find(({ kid }) => kid === decoded.header.kid);
+
+    //     if (!jwk) {
+    //         throw new Error('Invalid token');
+    //     }
+
+    //     const pem = jwkToPem(jwk);
+    //     const token_use = decoded.payload.token_use;
+
+    //     // Continue with your code logic
+    // }
+    async getUserId(request: Request, response: Response, next: NextFunction) {
+        console.log(response)
+
+    }
 
     async all(request: Request, response: Response, next: NextFunction) {
         try {
