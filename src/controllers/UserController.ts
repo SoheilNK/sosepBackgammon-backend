@@ -52,7 +52,10 @@ export class UserController {
     //     // Continue with your code logic
     // }
     async getUserId(request: Request, response: Response, next: NextFunction) {
-        console.log(response)
+        console.log("get user id after checking token")
+        
+        
+        return response.locals.result
 
     }
 
