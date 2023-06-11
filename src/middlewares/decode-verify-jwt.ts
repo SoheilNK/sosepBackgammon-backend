@@ -60,17 +60,24 @@ export const checkJwtCognito = async (request: ClaimVerifyRequest, res: Response
     const cognitoIssuer = `https://cognito-idp.${process.env.AWS_REGION}.amazonaws.com/${cognitoPoolId}`;
     console.log(`cognitoIssuer: ${cognitoIssuer}`);
     let cacheKeys: MapOfKidToPublicKey | undefined;
+    
     const getPublicKeys = async (): Promise<MapOfKidToPublicKey> => {
+        console.log(`1- Checking cache for public keys..`);
         if (!cacheKeys) {
             const url = `${cognitoIssuer}/.well-known/jwks.json`;
+            console.log(`2- Fetching public keys..`);
             const publicKeys = await Axios.default.get<PublicKeys>(url);
+            console.log(`3- Fetched public keys..`);
             cacheKeys = publicKeys.data.keys.reduce((agg, current) => {
                 const pem = jwkToPem(current);
                 agg[current.kid] = { instance: current, pem };
+                console.log(`4- agg is ${agg[current.kid]}`);
                 return agg;
             }, {} as MapOfKidToPublicKey);
+            console.log(`5- cacheKeys is ${cacheKeys[0]}`);
             return cacheKeys;
         } else {
+            console.log(`6- cacheKeys existed, didn.'t fetch again ${cacheKeys}`);
             return cacheKeys;
         }
     };
@@ -79,7 +86,7 @@ export const checkJwtCognito = async (request: ClaimVerifyRequest, res: Response
 
 
     let result: ClaimVerifyResult;
-    console.log(`user claim verify invoked for token checkJwtCognito`);
+    console.log(` 0- Checking token..`);
     try {
         const token = request.headers.authorization.split("Bearer ")[1];
         const tokenSections = (token || '').split('.');
@@ -111,7 +118,7 @@ export const checkJwtCognito = async (request: ClaimVerifyRequest, res: Response
         result = { userName: '', clientId: '', error, isValid: false };
 
     }
-    console.log(result)
+    // console.log(result)
     // return result as ClaimVerifyResult;
     // res.body("user", result);
     res.locals.result = result;

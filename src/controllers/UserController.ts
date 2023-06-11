@@ -53,9 +53,21 @@ export class UserController {
     // }
     async getUserId(request: Request, response: Response, next: NextFunction) {
         console.log("get user id after checking token")
+        let result = response.locals.result
+        // console.log('getuserid result: ' + result.error.message)
+        //ckeck for errors
+        if (result.error) {
+            console.log('send getuserid result: ' + result.error.message)
+
+            response.status(400).send(result.error.message)
+        } else {
+            //get user id from token
+            console.log('send getuserid result: ' + result.userName)
+            response.status(200).send(result)
+        }
+           
+                
         
-        
-        return response.locals.result
 
     }
 
