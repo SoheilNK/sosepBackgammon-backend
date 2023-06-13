@@ -13,44 +13,6 @@ import fetch from 'node-fetch';
 export class UserController {
 
     private userRepository = AppDataSource.getRepository(User)
-
-    // getOpenIdConfig = async () => {
-    //     // const openIdConfigUrl = `https://cognito-idp.${process.env.AWS_REGION}.amazonaws.com/${process.env.USER_POOL_ID}/.well-known/openid-configuration`;
-    //     const openIdConfigUrl = `https://cognito-idp.${process.env.AWS_REGION}.amazonaws.com/${process.env.USER_POOL_ID}/.well-known/openid-configuration`;
-    //     const openIdConfigResponse = await fetch(openIdConfigUrl);
-    //     const openIdJson = await openIdConfigResponse.json() as {
-    //         jwks_uri: string;
-    //     };
-
-    //     const jwksResponse = await fetch(openIdJson.jwks_uri);
-    //     const jwks = await jwksResponse.json();
-
-
-    //     return {
-    //         openIdJson,
-    //         jwks,
-    //     };
-    // }
-
-    // //check signature of token and return user ID if valid
-    // // Assuming the class containing this method is named "YourClass"
-    // async checktoken(request: Request, response: Response, next: NextFunction) {
-    //     const auth_token = request.headers.authorization.split("Bearer ")[1] as string;
-    //     const openIdConfig = await this.getOpenIdConfig() as { openIdJson: { jwks_uri: string; }; jwks: { keys: { kid: string; }[]; }; };
-
-    //     // Get the jwk used for the signature
-    //     const decoded = jwt.decode(auth_token, { complete: true }) as { header: jwt.JwtHeader; payload: jwt.JwtPayload };
-    //     const jwk = openIdConfig.jwks.keys.find(({ kid }) => kid === decoded.header.kid);
-
-    //     if (!jwk) {
-    //         throw new Error('Invalid token');
-    //     }
-
-    //     const pem = jwkToPem(jwk);
-    //     const token_use = decoded.payload.token_use;
-
-    //     // Continue with your code logic
-    // }
     async getUserId(request: Request, response: Response, next: NextFunction) {
         console.log("get user id after checking token")
         let result = response.locals.result
@@ -58,12 +20,33 @@ export class UserController {
         //ckeck for errors
         if (result.error) {
             console.log('send getuserid result: ' + result.error.message)
+            //handle expired token here 
+            if (result.error.message === 'jwt expired') {
+                //refresh token
+                console.log('refresh token')
+                const refreshToken = request.cookies.refreshToken
+                console.log('refresh token: ' + refreshToken)
+                const url = 'http://localhost:3000/refresh-token'
+                
+                response.status(401).send(result.error.message)
+            } else {
+                response.status(500).send(result.error.message)
+            }
 
-            response.status(400).send(result.error.message)
         } else {
-            //get user id from token
-            console.log('send getuserid result: ' + result.userName)
-            response.status(200).send(result)
+            //get username from token
+            const username = result.userName
+            console.log('send getuserid result: ' + username)
+            //get user from database
+            try {
+                const user = await this.userRepository.findOneOrFail({ where: { username } });
+                response.status(200).send(result)
+            } catch (error) {
+                response.status(404).send({ message: "User not found" });
+            }
+            
+            
+            // response.status(200).send(result)
         }
            
                 
