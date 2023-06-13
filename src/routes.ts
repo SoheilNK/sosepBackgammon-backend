@@ -2,7 +2,7 @@ import { checkJwt } from "./middlewares/checkJwt";
 import { checkRole } from "./middlewares/checkRole";
 import { UserController } from "./controllers/UserController";
 import { AuthController } from "./controllers/AuthController";
-import { checkJwtCognito } from "./middlewares/decode-verify-jwt";
+import { checkJwtCognito } from "./middlewares/checkJwtCognito";
 
 
 
@@ -14,7 +14,7 @@ export const Routes = [
         route: "/api/user",
         middlewares: [checkJwtCognito],
         controller: UserController,
-        action: "getUserId",
+        action: "getUser",
     },
 {
     //Get all users--

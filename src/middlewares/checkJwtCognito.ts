@@ -114,14 +114,19 @@ export const checkJwtCognito = async (request: ClaimVerifyRequest, res: Response
         }
         console.log(`claim confirmed for ${claim.username}`);
         result = { userName: claim.username, clientId: claim.client_id, isValid: true };
+        res.locals.result = result;
+
     } catch (error) {
-        result = { userName: '', clientId: '', error, isValid: false };
+        // result = { userName: '', clientId: '', error, isValid: false };
+        console.log(`error: ${error}`);
+        res.status(401).send(`unauthorized ${error}`);
+        return;
 
     }
     // console.log(result)
     // return result as ClaimVerifyResult;
     // res.body("user", result);
-    res.locals.result = result;
+    ;
     //Call the next middleware or controller
     next();
 

@@ -13,46 +13,51 @@ import fetch from 'node-fetch';
 export class UserController {
 
     private userRepository = AppDataSource.getRepository(User)
-    async getUserId(request: Request, response: Response, next: NextFunction) {
-        console.log("get user id after checking token")
+
+    async getUser(request: Request, response: Response, next: NextFunction) {
+        console.log("get user data after checking token")
         let result = response.locals.result
-        // console.log('getuserid result: ' + result.error.message)
-        //ckeck for errors
-        if (result.error) {
-            console.log('send getuserid result: ' + result.error.message)
-            //handle expired token here 
-            if (result.error.message === 'jwt expired') {
-                //refresh token
-                console.log('refresh token')
-                const refreshToken = request.cookies.refreshToken
-                console.log('refresh token: ' + refreshToken)
-                const url = 'http://localhost:3000/refresh-token'
-                
-                response.status(401).send(result.error.message)
-            } else {
-                response.status(500).send(result.error.message)
-            }
-
-        } else {
-            //get username from token
-            const username = result.userName
-            console.log('send getuserid result: ' + username)
-            //get user from database
-            try {
-                const user = await this.userRepository.findOneOrFail({ where: { username } });
-                response.status(200).send(result)
-            } catch (error) {
-                response.status(404).send({ message: "User not found" });
-            }
+        console.log('result from getUser(): ' + JSON.stringify(result))
+        let username = result.userName
+        console.log('result from getUser(): ' + username)
+        //get user from database
+        try {
+            const user = await this.userRepository.findOneOrFail({ where: { username } });
+            response.status(200).send(user)
+        } catch (error) {
+            // response.status(404).send({ message: "User not found in data base" });
             
+            console.log('user not found in database')
+            const user = Object.assign(new User(), {
+                username: username,
+                email: 'email',
+                password: "password",
+                role: "USER"
+            });
+            //add user to database
+            const newuser = await this.addUser(user)
+            response.status(200).send(newuser)
             
-            // response.status(200).send(result)
+            // response.status(200).send(newuser)
         }
-           
-                
-        
-
     }
+
+    async addUser(user: User) {
+
+        try {
+            const errors = await validate(user);
+            if (errors.length > 0) {
+                return errors;
+            } else {
+                await this.userRepository.save(user);
+                console.log(`You have successfully added user "${user.username}" to database`)
+                return user       
+            }
+        } catch (error) {
+            console.log(`Username "${user.username}" already in use`)
+        }
+    }
+
 
     async all(request: Request, response: Response, next: NextFunction) {
         try {
@@ -83,7 +88,7 @@ export class UserController {
             response.status(404).send({ message: "User not found" });
         }
     }
-    
+
 
     async edit(request: Request, response: Response, next: NextFunction) {
         const id = parseInt(request.params.id);
