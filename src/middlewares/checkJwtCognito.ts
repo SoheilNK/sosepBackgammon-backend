@@ -14,6 +14,7 @@ interface ClaimVerifyResult {
     readonly clientId: string;
     readonly isValid: boolean;
     readonly error?: any;
+    readonly email: string;
 }
 
 interface TokenHeader {
@@ -90,6 +91,7 @@ export const checkJwtCognito = async (request: ClaimVerifyRequest, res: Response
     try {
         const token = request.headers.authorization.split("Bearer ")[1];
         const tokenSections = (token || '').split('.');
+        const email = request.body.id_token.email;
         if (tokenSections.length < 2) {
             throw new Error('requested token is invalid');
         }
@@ -113,7 +115,7 @@ export const checkJwtCognito = async (request: ClaimVerifyRequest, res: Response
             throw new Error('claim use is not access');
         }
         console.log(`claim confirmed for ${claim.username}`);
-        result = { userName: claim.username, clientId: claim.client_id, isValid: true };
+        result = { userName: claim.username, clientId: claim.client_id, isValid: true, email: 'email' };
         res.locals.result = result;
 
     } catch (error) {

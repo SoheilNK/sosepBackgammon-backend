@@ -17,6 +17,7 @@ export class UserController {
     async getUser(request: Request, response: Response, next: NextFunction) {
         console.log("get user data after checking token")
         let result = response.locals.result
+        let email = result.email
         console.log('result from getUser(): ' + JSON.stringify(result))
         let username = result.userName
         console.log('result from getUser(): ' + username)
@@ -30,12 +31,14 @@ export class UserController {
             console.log('user not found in database')
             const user = Object.assign(new User(), {
                 username: username,
-                email: 'email',
+                email: email,
                 password: "password",
                 role: "USER"
             });
             //add user to database
-            const newuser = await this.addUser(user)
+            await this.addUser(user)
+            //get user from database
+            const newuser = await this.userRepository.findOneOrFail({ where: { username } });
             response.status(200).send(newuser)
             
             // response.status(200).send(newuser)
