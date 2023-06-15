@@ -49,6 +49,7 @@ interface Claim {
     exp: number;
     username: string;
     client_id: string;
+    email: string;
 }
 
 
@@ -91,7 +92,15 @@ export const checkJwtCognito = async (request: ClaimVerifyRequest, res: Response
     try {
         const token = request.headers.authorization.split("Bearer ")[1];
         const tokenSections = (token || '').split('.');
-        const email = request.body.id_token.email;
+        const x_id_token = request.headers.x_id_token;
+        //isolate email from x_id_token
+        const x_id_tokenSections = (x_id_token || '').split('.');
+        const x_id_tokenJSON = Buffer.from(x_id_tokenSections[1], 'base64').toString('utf8');
+        const x_id_tokenClaim = JSON.parse(x_id_tokenJSON) as Claim;
+        console.table(`x_id_tokenClaim: ${x_id_tokenClaim}`);
+        const email = x_id_tokenClaim.email;
+        console.log(`x_id_tokenClaim.email: ${email}`);
+
         if (tokenSections.length < 2) {
             throw new Error('requested token is invalid');
         }
@@ -115,7 +124,7 @@ export const checkJwtCognito = async (request: ClaimVerifyRequest, res: Response
             throw new Error('claim use is not access');
         }
         console.log(`claim confirmed for ${claim.username}`);
-        result = { userName: claim.username, clientId: claim.client_id, isValid: true, email: 'email' };
+        result = { userName: claim.username, clientId: claim.client_id, isValid: true, email: email };
         res.locals.result = result;
 
     } catch (error) {

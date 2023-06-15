@@ -1,7 +1,6 @@
 import { checkJwt } from "./middlewares/checkJwt";
 import { checkRole } from "./middlewares/checkRole";
 import { UserController } from "./controllers/UserController";
-import { AuthController } from "./controllers/AuthController";
 import { checkJwtCognito } from "./middlewares/checkJwtCognito";
 
 
@@ -45,25 +44,6 @@ export const Routes = [
     middlewares: [checkJwt, checkRole(["ADMIN"])],
     controller: UserController,
     action: "remove",
-}, {
-    //Create a new user--
-    method: "post",
-    route: "/api/auth/signup",
-    // middlewares: [checkJwt],
-    controller: AuthController,
-    action: "signup",
-}, {
-    //Login route--
-    method: "post",
-    route: "/api/auth/signin",
-    controller: AuthController,
-    action: "signin",
+    }, 
+];
 
-}, {
-    //Change my password
-    method: "post",
-    route: "/api/change-password/",
-    middlewares: [checkJwt],
-    controller: AuthController,
-    action: "changePassword",
-}]
