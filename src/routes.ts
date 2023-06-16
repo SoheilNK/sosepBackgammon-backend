@@ -1,4 +1,3 @@
-import { checkJwt } from "./middlewares/checkJwt";
 import { checkRole } from "./middlewares/checkRole";
 import { UserController } from "./controllers/UserController";
 import { checkJwtCognito } from "./middlewares/checkJwtCognito";
@@ -19,7 +18,7 @@ export const Routes = [
     //Get all users--
     method: "get",
     route: "/api/users",
-    middlewares: [checkJwt, checkRole(["ADMIN"])],
+    middlewares: [ checkRole(["ADMIN"])],
     controller: UserController,
 
     action: "all",
@@ -27,21 +26,21 @@ export const Routes = [
     // Get one user--
     method: "get",
     route: "/api/users/:id([0-9]+)",
-    middlewares: [checkJwt, checkRole(["ADMIN"])],
+    middlewares: [ checkRole(["ADMIN"])],
     controller: UserController,
     action: "one",
 }, {
     //Edit one user--
     method: "put", // or patch
     route: "/api/users/:id([0-9]+)",
-    middlewares: [checkJwt, checkRole(["ADMIN"])],
+    middlewares: [ checkRole(["ADMIN"])],
     controller: UserController,
     action: "edit",
 }, {
     //Delete one user--
     method: "delete",
     route: "/api/users/:id([0-9]+)",
-    middlewares: [checkJwt, checkRole(["ADMIN"])],
+    middlewares: [ checkRole(["ADMIN"])],
     controller: UserController,
     action: "remove",
     }, 

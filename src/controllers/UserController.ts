@@ -2,9 +2,6 @@ import { AppDataSource } from "../data-source"
 import { NextFunction, Request, Response } from "express"
 import { User } from "../entity/User"
 import { validate } from "class-validator";
-import * as jwt from "jsonwebtoken";
-import * as jwkToPem from "jwk-to-pem";
-import fetch from 'node-fetch';
 
 
 
@@ -32,7 +29,6 @@ export class UserController {
             const user = Object.assign(new User(), {
                 username: username,
                 email: email,
-                password: "password",
                 role: "USER"
             });
             //add user to database

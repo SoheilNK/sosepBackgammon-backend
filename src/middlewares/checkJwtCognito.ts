@@ -3,6 +3,8 @@ import * as Axios from 'axios';
 import { Request, Response, NextFunction } from "express";
 import * as jsonwebtoken from 'jsonwebtoken';
 const jwkToPem = require('jwk-to-pem');
+let memoizedVal: MapOfKidToPublicKey | undefined;
+let callCounter: number = 1;
 
 interface ClaimVerifyRequest {
     [x: string]: any;
@@ -53,68 +55,71 @@ interface Claim {
 }
 
 
-export const checkJwtCognito = async (request: ClaimVerifyRequest, res: Response, next: NextFunction) => {
 
+export const checkJwtCognito = async (request: ClaimVerifyRequest, res: Response, next: NextFunction) => {
     const cognitoPoolId = process.env.COGNITO_POOL_ID || '';
     if (!cognitoPoolId) {
         throw new Error('env var required for cognito pool');
     }
     const cognitoIssuer = `https://cognito-idp.${process.env.AWS_REGION}.amazonaws.com/${cognitoPoolId}`;
-    console.log(`cognitoIssuer: ${cognitoIssuer}`);
-    let cacheKeys: MapOfKidToPublicKey | undefined;
-    
+
     const getPublicKeys = async (): Promise<MapOfKidToPublicKey> => {
-        console.log(`1- Checking cache for public keys..`);
-        if (!cacheKeys) {
+        // console.log(`1- Checking cache for public keys..`);
+        if (memoizedVal !== undefined) {
+            console.log('1- from cache')
+            return memoizedVal
+        } else {
             const url = `${cognitoIssuer}/.well-known/jwks.json`;
             console.log(`2- Fetching public keys..`);
             const publicKeys = await Axios.default.get<PublicKeys>(url);
-            console.log(`3- Fetched public keys..`);
-            cacheKeys = publicKeys.data.keys.reduce((agg, current) => {
+
+            memoizedVal = publicKeys.data.keys.reduce((agg, current) => {
                 const pem = jwkToPem(current);
                 agg[current.kid] = { instance: current, pem };
-                console.log(`4- agg is ${agg[current.kid]}`);
                 return agg;
-            }, {} as MapOfKidToPublicKey);
-            console.log(`5- cacheKeys is ${cacheKeys[0]}`);
-            return cacheKeys;
-        } else {
-            console.log(`6- cacheKeys existed, didn.'t fetch again ${cacheKeys}`);
-            return cacheKeys;
+            }
+                , {} as MapOfKidToPublicKey);
+            console.log(`3- memoizedVal is ${memoizedVal}`);
+            return memoizedVal;
         }
+
     };
 
     const verifyPromised = promisify(jsonwebtoken.verify.bind(jsonwebtoken));
-
-
     let result: ClaimVerifyResult;
-    console.log(` 0- Checking token..`);
+    // console.log(` 0- Checking token..`);
     try {
-        const token = request.headers.authorization.split("Bearer ")[1];
-        const tokenSections = (token || '').split('.');
+        const access_token = request.headers.authorization.split("Bearer ")[1];
+        const access_tokenSections = (access_token || '').split('.');
         const x_id_token = request.headers.x_id_token;
         //isolate email from x_id_token
         const x_id_tokenSections = (x_id_token || '').split('.');
         const x_id_tokenJSON = Buffer.from(x_id_tokenSections[1], 'base64').toString('utf8');
         const x_id_tokenClaim = JSON.parse(x_id_tokenJSON) as Claim;
-        console.table(`x_id_tokenClaim: ${x_id_tokenClaim}`);
+        // console.table(`x_id_tokenClaim: ${x_id_tokenClaim}`);
         const email = x_id_tokenClaim.email;
-        console.log(`x_id_tokenClaim.email: ${email}`);
+        // console.log(`x_id_tokenClaim.email: ${email}`);
 
-        if (tokenSections.length < 2) {
+        if (access_tokenSections.length < 2) {
             throw new Error('requested token is invalid');
         }
-        const headerJSON = Buffer.from(tokenSections[0], 'base64').toString('utf8');
+        const headerJSON = Buffer.from(access_tokenSections[0], 'base64').toString('utf8');
         const header = JSON.parse(headerJSON) as TokenHeader;
+
+        console.log(`Number of calls for public keys: ${callCounter}`);
+        console.time('call duration')
         const keys = await getPublicKeys();
+        console.timeEnd('call duration')
+        callCounter++;
+
         const key = await keys[header.kid];
         if (key === undefined) {
             throw new Error('claim made for unknown kid');
         }
-        const claim = await verifyPromised(token, key.pem) as Claim;
+        const claim = await verifyPromised(access_token, key.pem) as Claim;
         const currentSeconds = Math.floor((new Date()).valueOf() / 1000);
         if (currentSeconds > claim.exp || currentSeconds < claim.auth_time - 5) {
-            console.log('currentSeconds: ', currentSeconds, 'claim.exp: ', claim.exp, 'claim.auth_time: ', claim.auth_time);
+            // console.log('currentSeconds: ', currentSeconds, 'claim.exp: ', claim.exp, 'claim.auth_time: ', claim.auth_time);
             throw new Error('claim is expired or invalid');
         }
         if (claim.iss !== cognitoIssuer) {
@@ -134,10 +139,7 @@ export const checkJwtCognito = async (request: ClaimVerifyRequest, res: Response
         return;
 
     }
-    // console.log(result)
-    // return result as ClaimVerifyResult;
-    // res.body("user", result);
-    ;
+
     //Call the next middleware or controller
     next();
 
