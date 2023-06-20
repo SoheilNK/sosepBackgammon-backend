@@ -1,7 +1,7 @@
 import "reflect-metadata"
 import { DataSource } from "typeorm"
 import { User } from "./entity/User"
-import { CreateAdminUser1685301038827 } from "../1685301038827-CreateAdminUser"
+// import { CreateAdminUser1685301038827 } from "../1685301038827-CreateAdminUser"
 
 
 const dotenv = require('dotenv');
@@ -17,7 +17,7 @@ export const AppDataSource = new DataSource({
     entities: [User],
     synchronize: true,
     logging: false,
-    migrations: [CreateAdminUser1685301038827],
+    // migrations: [CreateAdminUser1685301038827],
     subscribers: [],
 
 })
