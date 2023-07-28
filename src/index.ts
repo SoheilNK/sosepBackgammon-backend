@@ -40,7 +40,7 @@ AppDataSource.initialize().then(async () => {
         // You can rewrite this part of the code to accept only the requests from allowed origin
         const connection = request.accept(null, request.origin);
         clients[userID] = connection;
-        console.log('connected: ' + userID + ' in ' + Object.getOwnPropertyNames(clients));
+        console.log('WS-connected: ' + userID + ' in ' + Object.getOwnPropertyNames(clients));
 
         connection.on('message', function (message) {
             if (message.type === 'utf8') {

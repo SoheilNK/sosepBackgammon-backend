@@ -57,6 +57,7 @@ interface Claim {
 
 
 export const checkJwtCognito = async (request: ClaimVerifyRequest, res: Response, next: NextFunction) => {
+    console.log('checkJwtCognito middleware called')
     const cognitoPoolId = process.env.COGNITO_POOL_ID || '';
     if (!cognitoPoolId) {
         throw new Error('env var required for cognito pool');
