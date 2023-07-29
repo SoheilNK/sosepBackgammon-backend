@@ -71,23 +71,6 @@ export class UserController {
         }
     }
 
-    async one(request: Request, response: Response, next: NextFunction) {
-        //Get the ID from the url
-        const id = parseInt(request.params.id)
-
-        //Get the user from database
-        try {
-            const user = await this.userRepository.findOneOrFail({
-                where: { id },
-                select: ["id", "username", "role"] //We dont want to send the password on response
-            });
-            return user
-
-        } catch (error) {
-            response.status(404).send({ message: "User not found" });
-        }
-    }
-
 
     async edit(request: Request, response: Response, next: NextFunction) {
         const id = parseInt(request.params.id);

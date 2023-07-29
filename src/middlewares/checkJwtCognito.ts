@@ -13,7 +13,6 @@ interface ClaimVerifyRequest {
 
 interface ClaimVerifyResult {
     readonly userName: string;
-    readonly clientId: string;
     readonly isValid: boolean;
     readonly error?: any;
     readonly email: string;
@@ -137,11 +136,10 @@ export const checkJwtCognito = async (request: ClaimVerifyRequest, res: Response
             throw new Error('claim use is not access');
         }
         console.log(`claim confirmed for ${claim.username}`);
-        result = { userName: claim.username, clientId: claim.client_id, isValid: true, email: email };
+        result = { userName: claim.username, isValid: true, email: email };
         res.locals.result = result;
 
     } catch (error) {
-        // result = { userName: '', clientId: '', error, isValid: false };
         console.log(`error: ${error}`);
         res.status(401).send(`unauthorized ${error}`);
         return;

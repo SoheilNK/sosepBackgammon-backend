@@ -21,7 +21,14 @@ export const Routes = [
         controller: GameController,
         middlewares: [checkJwtCognito],
         action: "getOnlineGames",
-    }, 
+    }, {
+        //Add a new online game
+        method: "post",
+        route: "/api/games/add",
+        controller: GameController,
+        middlewares: [checkJwtCognito],
+        action: "addOnlineGame",
+    } 
 
     // {
     //     //Get all users--
