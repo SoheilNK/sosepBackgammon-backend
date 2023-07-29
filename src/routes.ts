@@ -1,6 +1,5 @@
 import { checkRole } from "./middlewares/checkRole";
 import { UserController } from "./controllers/UserController";
-import { backgammonController } from "./controllers/GameController";
 import { GameController } from "./controllers/GameController";
 import { checkJwtCognito } from "./middlewares/checkJwtCognito";
 
@@ -19,8 +18,9 @@ export const Routes = [
         //Get all online games
         method: "get",
         route: "/api/games",
-        controller: backgammonController,
-        action: "allOnlineBackgammonGames",
+        controller: GameController,
+        middlewares: [checkJwtCognito],
+        action: "getOnlineGames",
     }, 
 
     // {

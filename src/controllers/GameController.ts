@@ -3,7 +3,7 @@ interface OnlineGame {
     matchId: string;
     hostId: number;
     guestId: number;
-    matchState: string;
+    status: string;
 }
 
 export class GameController<T extends OnlineGame> {
@@ -21,18 +21,3 @@ export class GameController<T extends OnlineGame> {
     }
 }
 
-// Define a specific type of game that implements the OnlineGame interface
-class BackgammonGame implements OnlineGame {
-    constructor(public matchId: string, public hostId: number, public guestId: number, public matchState: string) { }
-}
-
-// Create a new GameController instance
-export const backgammonController = new GameController<BackgammonGame>();
-
-// Add a new online chess game
-const chessGame1 = new BackgammonGame("chess-123", 1, 2, "ongoing");
-backgammonController.addOnlineGame(chessGame1);
-
-// Get all online games
-const allOnlineBackgammonGames = backgammonController.getOnlineGames();
-console.log("online games: ", allOnlineBackgammonGames);
