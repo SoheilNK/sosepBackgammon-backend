@@ -5,7 +5,7 @@ import * as cors from "cors";
 import { Request, Response } from "express"
 import { AppDataSource } from "./data-source"
 import { Routes } from "./routes"
-
+import { w3cwebsocket as W3CWebSocket, IMessageEvent } from "websocket";
 
 
 
@@ -25,7 +25,6 @@ AppDataSource.initialize().then(async () => {
         httpServer: server
     });
 
-    const clients = {};
 
     // This code generates unique userid for everyuser.
     const getUniqueID = () => {
@@ -33,29 +32,48 @@ AppDataSource.initialize().then(async () => {
         return s4() + s4() + '-' + s4();
     };
 
-    wsServer.on("request", (request) => {
-        var userID = getUniqueID();
-        let key: string;
-        console.log((new Date()) + 'Received a new connection from origin' + request.origin + '.');
-        // You can rewrite this part of the code to accept only the requests from allowed origin
-        const connection = request.accept(null, request.origin);
-        clients[userID] = connection;
-        console.log('WS-connected: ' + userID + ' in ' + Object.getOwnPropertyNames(clients));
+    const clients = new Map<string, W3CWebSocket>();
 
-        connection.on('message', function (message) {
+    wsServer.on("request", (request) => {
+        let userID: string;
+        const { origin } = request;
+        console.log((new Date()) + ' Received a new connection from origin ' + origin + '.');
+
+        const connection = request.accept(null, request.origin);
+        // Check if the userID already exists in the clients Map
+        if (request.key && clients.has(request.key)) {
+            userID = request.key;
+            console.log(`User ${userID} reconnected.`);
+        } else {
+            userID = getUniqueID();
+            clients.set(userID, connection);
+            console.log(`New user ${userID} connected.`);
+        }
+
+        console.log('WS-connected: ' + userID + ' in ' + Array.from(clients.keys()));
+
+        connection.on('message', function (message: IMessageEvent) {
             if (message.type === 'utf8') {
                 console.log('Received Message: ', message.utf8Data);
 
-                // broadcasting message to all connected clients
-                for (key in clients) {
-                    clients[key].sendUTF(message.utf8Data);
-                    console.log('sent Message to: ', clients[key]);
-                }
+                // broadcasting message to all connected clients except the sender
+                clients.forEach((otherConnection, key) => {
+                    if (key !== userID) {
+                        otherConnection.sendUTF(message.utf8Data);
+                        console.log(`Sent Message to ${key}`);
+                    }
+                });
             }
-        })
+        });
+
+        // Handle the connection close event to remove the user from clients when disconnected
+        connection.on('close', () => {
+            clients.delete(userID);
+            console.log(`User ${userID} disconnected.`);
+        });
     });
     //create a webSocket server----------------END-------------------------
-
+    
     // create express app
     const dotenv = require('dotenv');
     dotenv.config();
@@ -89,5 +107,8 @@ AppDataSource.initialize().then(async () => {
     app.listen(port)
 
     console.log(`Express server has started on port ${port}.`)
+    
 
 }).catch(error => console.log(error))
+
+
