@@ -5,78 +5,22 @@ import * as cors from "cors";
 import { Request, Response } from "express"
 import { AppDataSource } from "./data-source"
 import { Routes } from "./routes"
-import { w3cwebsocket as W3CWebSocket, IMessageEvent } from "websocket";
-
+import { createWebSocketServer } from "./WebSocketServer";
 
 
 AppDataSource.initialize().then(async () => {
-
-    //create a webSocket server----------------START-------------------------
-    const webSocketServerPort = process.env.WEBSOCKET_PORT;
-    const webSocketServer = require('websocket').server;
-    const http = require('http');
-
-    // Spinning the http server and the websocket server.
-    const server = http.createServer();
-    server.listen(webSocketServerPort);
-    console.log(`webSocketServer listening on port ${webSocketServerPort}`);
-
-    const wsServer = new webSocketServer({
-        httpServer: server
-    });
-
-
-    // This code generates unique userid for everyuser.
-    const getUniqueID = () => {
-        var s4 = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-        return s4() + s4() + '-' + s4();
-    };
-
-    const clients = new Map<string, W3CWebSocket>();
-
-    wsServer.on("request", (request) => {
-        let userID: string;
-        const { origin } = request;
-        console.log((new Date()) + ' Received a new connection from origin ' + origin + '.');
-
-        const connection = request.accept(null, request.origin);
-        // Check if the userID already exists in the clients Map
-        if (request.key && clients.has(request.key)) {
-            userID = request.key;
-            console.log(`User ${userID} reconnected.`);
-        } else {
-            userID = getUniqueID();
-            clients.set(userID, connection);
-            console.log(`New user ${userID} connected.`);
-        }
-
-        console.log('WS-connected: ' + userID + ' in ' + Array.from(clients.keys()));
-
-        connection.on('message', function (message: IMessageEvent) {
-            if (message.type === 'utf8') {
-                console.log('Received Message: ', message.utf8Data);
-
-                // broadcasting message to all connected clients except the sender
-                clients.forEach((otherConnection, key) => {
-                    if (key !== userID) {
-                        otherConnection.sendUTF(message.utf8Data);
-                        console.log(`Sent Message to ${key}`);
-                    }
-                });
-            }
-        });
-
-        // Handle the connection close event to remove the user from clients when disconnected
-        connection.on('close', () => {
-            clients.delete(userID);
-            console.log(`User ${userID} disconnected.`);
-        });
-    });
-    //create a webSocket server----------------END-------------------------
-    
-    // create express app
-    const dotenv = require('dotenv');
+        const dotenv = require('dotenv');
     dotenv.config();
+
+
+    // Set the desired port for the game WebSocket server
+    const gameWebSocketPort = process.env.GAME_WEBSOCKET_PORT || 8002;
+  createWebSocketServer(gameWebSocketPort, "game");
+
+  // Set the desired port for the chat WebSocket server
+  const chatWebSocketPort = process.env.CHAT_WEBSOCKET_PORT || 8001;
+  createWebSocketServer(chatWebSocketPort, "chat");    
+    // create express app
 
     const app = express()
     const port = process.env.PORT;
