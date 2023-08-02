@@ -15,11 +15,12 @@ AppDataSource.initialize().then(async () => {
 
     // Set the desired port for the game WebSocket server
     const gameWebSocketPort = process.env.GAME_WEBSOCKET_PORT || 8002;
-  createWebSocketServer(gameWebSocketPort, "game");
+    // Create the game WebSocket server on the desired port and asyncronously wait for it to be ready
+    const gameWsServer = await createWebSocketServer(gameWebSocketPort, "game");
 
   // Set the desired port for the chat WebSocket server
   const chatWebSocketPort = process.env.CHAT_WEBSOCKET_PORT || 8001;
-  createWebSocketServer(chatWebSocketPort, "chat");    
+  const chatWsServer = await createWebSocketServer(chatWebSocketPort, "chat");    
     // create express app
 
     const app = express()

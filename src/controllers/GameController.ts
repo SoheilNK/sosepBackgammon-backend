@@ -35,7 +35,7 @@ export class GameController {
 
         onlineGames.push(newOnlineGame);
         console.log(`You have successfully added online game "${newOnlineGame.matchId}" to database`)
-        console.log(`All online games: ${JSON.stringify(onlineGames)}`)
+        // console.log(`All online games: ${JSON.stringify(onlineGames)}`)
 
         // Return the newly added online game
         return newOnlineGame;

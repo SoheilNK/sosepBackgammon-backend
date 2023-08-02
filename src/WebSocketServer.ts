@@ -11,7 +11,7 @@ export const createWebSocketServer = (port: number, endpoint: string) => {
 
     const server = http.createServer();
     server.listen(port);
-    console.log(`webSocketServer listening on port ${port} for endpoint: ${endpoint}`);
+    console.log(`webSocketServer ${server} listening on port ${port} for endpoint: ${endpoint}`);
 
     const wsServer = new webSocketServer({
         httpServer: server
@@ -22,7 +22,7 @@ export const createWebSocketServer = (port: number, endpoint: string) => {
     wsServer.on("request", (request) => {
         let userID: string;
         const { origin } = request;
-        console.log((new Date()) + ` Received a new connection from origin ${origin} for endpoint: ${endpoint}.`);
+        console.log(` Received a new connection from origin ${origin} for endpoint: ${endpoint}.`);
 
         const connection = request.accept(null, request.origin);
 
@@ -32,10 +32,10 @@ export const createWebSocketServer = (port: number, endpoint: string) => {
         } else {
             userID = getUniqueID();
             clients.set(userID, connection);
-            console.log(`New user ${userID} connected.`);
+            console.log(`New user ${userID} connected for ${endpoint}.`);
         }
 
-        console.log('WS-connected: ' + userID + ' in ' + Array.from(clients.keys()));
+        console.log(endpoint + 'WS-connected: ' + userID + ' in ' + Array.from(clients.keys()));
 
         connection.on('message', function (message: IMessageEvent) {
             if (message.type === 'utf8') {
