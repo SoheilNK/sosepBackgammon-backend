@@ -129,6 +129,6 @@ export class GameController {
         //send onlineGame via wsServer to host
 
         // Return the updated online game
-        return onlineGame;
+        return newOnlineGame;
     }
 }

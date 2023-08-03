@@ -39,7 +39,7 @@ export const createWebSocketServer = (port: number) => {
             //send back userID to the client
             connection.sendUTF(JSON.stringify({ type: 'userID', data: userID }));
             //update onlinemages
-            
+
         }
 
         console.log('WebSocket-connected for user id: ' + userID + ' in ' + Array.from(clients.keys()));
@@ -53,14 +53,21 @@ export const createWebSocketServer = (port: number) => {
                 //get the opponent's id from the onlineGames array
                 let thisGame = onlineGames.find((game: any) => game.matchId === data.matchId);
                 console.log(`thisGame: ${JSON.stringify(thisGame)}`);
-                let opponentId = msgFor === "host" ? thisGame.hostName : thisGame.guestName;
+                let opponentId = (msgFor === "host") ? thisGame.hostId : thisGame.guestId;
                 } catch (error) {
                     console.log(error); 
                 }
 
                 //send the message to the opponent
-                clients.get(opponentId).sendUTF(message.utf8Data);
+                const client = clients.get(opponentId);
+                if (client) {
+                    client.sendUTF(message.utf8Data);
                 console.log(`Sent Message to ${opponentId}`);
+                }
+                // //send the message to the sender
+                // connection.sendUTF(message.utf8Data);
+                // console.log(`Sent Message to ${userID}`);
+                
                 // //send the message to all other users
                 // clients.forEach((otherConnection, key) => {
                 //     if (key !== userID) {
