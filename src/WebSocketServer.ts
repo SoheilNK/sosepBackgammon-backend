@@ -1,4 +1,7 @@
 import { w3cwebsocket as W3CWebSocket, IMessageEvent } from "websocket";
+// import { onlineGames } from "./controllers/GameController";
+const games = require("./controllers/GameController");
+const onlineGames = games.onlineGames;
 
 const getUniqueID = () => {
     var s4 = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
@@ -33,22 +36,42 @@ export const createWebSocketServer = (port: number) => {
             userID = getUniqueID();
             clients.set(userID, connection);
             console.log(`New user ${userID} connected.`);
+            //send back userID to the client
+            connection.sendUTF(JSON.stringify({ type: 'userID', data: userID }));
+            //update onlinemages
+            
         }
 
         console.log('WebSocket-connected for user id: ' + userID + ' in ' + Array.from(clients.keys()));
 
         connection.on('message', function (message: IMessageEvent) {
             if (message.type === 'utf8') {
+                try {
                 console.log('Received Message: ', message.utf8Data);
+                let data = JSON.parse(message.utf8Data);
+                let msgFor = data.msgFor;
+                //get the opponent's id from the onlineGames array
+                let thisGame = onlineGames.find((game: any) => game.matchId === data.matchId);
+                console.log(`thisGame: ${JSON.stringify(thisGame)}`);
+                let opponentId = msgFor === "host" ? thisGame.hostName : thisGame.guestName;
+                } catch (error) {
+                    console.log(error); 
+                }
 
-                clients.forEach((otherConnection, key) => {
-                    if (key !== userID) {
-                        otherConnection.sendUTF(message.utf8Data);
-                        console.log(`Sent Message to ${key}`);
-                    }
-                });
+                //send the message to the opponent
+                clients.get(opponentId).sendUTF(message.utf8Data);
+                console.log(`Sent Message to ${opponentId}`);
+                // //send the message to all other users
+                // clients.forEach((otherConnection, key) => {
+                //     if (key !== userID) {
+                //         otherConnection.sendUTF(message.utf8Data);
+                //         console.log(`Sent Message to ${key}`);
+                //     }
+                // });
             }
         });
+  
+
 
         connection.on('close', () => {
             clients.delete(userID);
