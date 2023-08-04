@@ -1,6 +1,7 @@
 import { AppDataSource } from "../data-source";
 import { User } from "../entity/User";
 import { NextFunction, Request, Response } from "express";
+import clients from "../WebSocketServer";
 
 // Define an interface for the OnlineGame object
 export interface OnlineGame {
@@ -94,6 +95,19 @@ export class GameController {
     onlineGames[index] = onlineGame;
 
     //send onlineGame via wsServer to host
+    let hostId = onlineGame.hostId;
+    const client = clients.get(hostId);
+    if (client) {
+      client.send(
+        JSON.stringify({
+          type: "joinOnlineGame",
+          payload: onlineGame,
+        })
+      );
+    }
+
+
+
 
     // Return the updated online game
     return onlineGame;

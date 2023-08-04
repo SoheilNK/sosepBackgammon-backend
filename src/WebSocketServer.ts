@@ -2,6 +2,7 @@ import { w3cwebsocket as W3CWebSocket, IMessageEvent } from "websocket";
 // import { onlineGames } from "./controllers/GameController";
 const games = require("./controllers/GameController");
 const onlineGames = games.onlineGames;
+export const clients = new Map<string, W3CWebSocket>();
 
 const getUniqueID = () => {
     var s4 = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
@@ -16,11 +17,11 @@ export const createWebSocketServer = (port: number) => {
     server.listen(port);
     console.log(`webSocketServer listening on port ${port}`);
 
-    const wsServer = new webSocketServer({
+    export const wsServer = new webSocketServer({
         httpServer: server
     });
 
-    const clients = new Map<string, W3CWebSocket>();
+    
 
     wsServer.on("request", (request) => {
         let userID: string;
