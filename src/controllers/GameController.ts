@@ -1,7 +1,7 @@
 import { AppDataSource } from "../data-source";
 import { User } from "../entity/User";
 import { NextFunction, Request, Response } from "express";
-import * as interfaces from "../interfaces";
+import * as interfaces from "../types";
 import {webSocketServerInstance} from "../index";
 
 // Define an interface for the OnlineGame object

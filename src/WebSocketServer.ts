@@ -1,5 +1,8 @@
-import { w3cwebsocket as W3CWebSocket, IMessageEvent } from "websocket";
-import * as interfaces from "../interfaces";
+import { IMessageEvent, w3cwebsocket } from "websocket";
+import * as types from "./types";
+import { onlineGames } from "./controllers/GameController";
+
+
 
 const getUniqueID = () => {
   var s4 = () =>
@@ -10,11 +13,11 @@ const getUniqueID = () => {
 };
 
 export class WebSocketServer {
-  private clients: Map<string, W3CWebSocket>;
+  private clients: Map<string, w3cwebsocket>;
   private webSocketServer: any; // Type it properly to avoid any
 
   constructor(port: number) {
-    this.clients = new Map<string, W3CWebSocket>();
+    this.clients = new Map<string, w3cwebsocket>();
     const webSocketServer = require("websocket").server;
     const http = require("http");
 
@@ -41,7 +44,13 @@ export class WebSocketServer {
         this.clients.set(userID, connection);
         console.log(`New user ${userID} connected.`);
         //send back userID to the client
-        connection.sendUTF(JSON.stringify({ type: "userID", data: userID }));
+        let msg: types.DataFromServer = {
+          type: "userID",
+          msg: userID,
+          user: "",
+          matchId: "",
+        };
+        connection.sendUTF(JSON.stringify(msg));
         //update onlinemages
       }
 
@@ -51,12 +60,12 @@ export class WebSocketServer {
           " in " +
           Array.from(this.clients.keys())
       );
-      let onlineUser: interfaces.OnlineUser = {
+      let onlineUser: types.OnlineUser = {
         userId: userID,
         userName: "",
         status: "Online",
       };
-
+      let thisGame: types.OnlineGame;
       connection.on("message", (message: IMessageEvent) => {
         if (message.type === "utf8") {
           try {
@@ -64,7 +73,7 @@ export class WebSocketServer {
             let data = JSON.parse(message.utf8Data);
             let msgFor = data.msgFor;
             //get the opponent's id from the onlineGames array
-            let thisGame = onlineGames.find(
+            thisGame = onlineGames.find(
               (game: any) => game.matchId === data.matchId
             );
             console.log(`thisGame: ${JSON.stringify(thisGame)}`);
@@ -96,6 +105,11 @@ export class WebSocketServer {
       connection.on("close", () => {
         this.clients.delete(userID);
         console.log(`User ${userID} disconnected.`);
+        //if the host left remove the mathid from the onlineGames array
+        if (thisGame && thisGame.hostId === userID) {
+          onlineGames.splice(onlineGames.indexOf(thisGame), 1);
+          console.log(`Removed ${thisGame.matchId} from onlineGames array`);
+        }
       });
     });
   }
