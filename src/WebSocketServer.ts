@@ -1,89 +1,109 @@
 import { w3cwebsocket as W3CWebSocket, IMessageEvent } from "websocket";
-// import { onlineGames } from "./controllers/GameController";
-const games = require("./controllers/GameController");
-const onlineGames = games.onlineGames;
-export const clients = new Map<string, W3CWebSocket>();
+import * as interfaces from "../interfaces";
 
 const getUniqueID = () => {
-    var s4 = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-    return s4() + s4() + '-' + s4();
+  var s4 = () =>
+    Math.floor((1 + Math.random()) * 0x10000)
+      .toString(16)
+      .substring(1);
+  return s4() + s4() + "-" + s4();
 };
 
-export const createWebSocketServer = (port: number) => {
-    const webSocketServer = require('websocket').server;
-    const http = require('http');
+export class WebSocketServer {
+  private clients: Map<string, W3CWebSocket>;
+  private webSocketServer: any; // Type it properly to avoid any
+
+  constructor(port: number) {
+    this.clients = new Map<string, W3CWebSocket>();
+    const webSocketServer = require("websocket").server;
+    const http = require("http");
 
     const server = http.createServer();
     server.listen(port);
-    console.log(`webSocketServer listening on port ${port}`);
+    console.log(`WebSocketServer listening on port ${port}`);
 
-    export const wsServer = new webSocketServer({
-        httpServer: server
+    this.webSocketServer = new webSocketServer({
+      httpServer: server,
     });
 
-    
+    this.webSocketServer.on("request", (request: any) => {
+      let userID: string;
+      const { origin } = request;
+      console.log(`Received a new connection from origin ${origin}.`);
 
-    wsServer.on("request", (request) => {
-        let userID: string;
-        const { origin } = request;
-        console.log(` Received a new connection from origin ${origin}.`);
+      const connection = request.accept(null, request.origin);
 
-        const connection = request.accept(null, request.origin);
+      if (request.key && this.clients.has(request.key)) {
+        userID = request.key;
+        console.log(`User ${userID} reconnected.`);
+      } else {
+        userID = getUniqueID();
+        this.clients.set(userID, connection);
+        console.log(`New user ${userID} connected.`);
+        //send back userID to the client
+        connection.sendUTF(JSON.stringify({ type: "userID", data: userID }));
+        //update onlinemages
+      }
 
-        if (request.key && clients.has(request.key)) {
-            userID = request.key;
-            console.log(`User ${userID} reconnected.`);
-        } else {
-            userID = getUniqueID();
-            clients.set(userID, connection);
-            console.log(`New user ${userID} connected.`);
-            //send back userID to the client
-            connection.sendUTF(JSON.stringify({ type: 'userID', data: userID }));
-            //update onlinemages
+      console.log(
+        "WebSocket-connected for user id: " +
+          userID +
+          " in " +
+          Array.from(this.clients.keys())
+      );
+      let onlineUser: interfaces.OnlineUser = {
+        userId: userID,
+        userName: "",
+        status: "Online",
+      };
 
-        }
-
-        console.log('WebSocket-connected for user id: ' + userID + ' in ' + Array.from(clients.keys()));
-
-        connection.on('message', function (message: IMessageEvent) {
-            if (message.type === 'utf8') {
-                try {
-                console.log('Received Message: ', message.utf8Data);
-                let data = JSON.parse(message.utf8Data);
-                let msgFor = data.msgFor;
-                //get the opponent's id from the onlineGames array
-                let thisGame = onlineGames.find((game: any) => game.matchId === data.matchId);
-                console.log(`thisGame: ${JSON.stringify(thisGame)}`);
-                let opponentId = (msgFor === "host") ? thisGame.hostId : thisGame.guestId;
-                } catch (error) {
-                    console.log(error); 
-                }
-
-                //send the message to the opponent
-                const client = clients.get(opponentId);
-                if (client) {
-                    client.sendUTF(message.utf8Data);
-                console.log(`Sent Message to ${opponentId}`);
-                }
-                // //send the message to the sender
-                // connection.sendUTF(message.utf8Data);
-                // console.log(`Sent Message to ${userID}`);
-                
-                // //send the message to all other users
-                // clients.forEach((otherConnection, key) => {
-                //     if (key !== userID) {
-                //         otherConnection.sendUTF(message.utf8Data);
-                //         console.log(`Sent Message to ${key}`);
-                //     }
-                // });
+      connection.on("message", (message: IMessageEvent) => {
+        if (message.type === "utf8") {
+          try {
+            console.log("Received Message: ", message.utf8Data);
+            let data = JSON.parse(message.utf8Data);
+            let msgFor = data.msgFor;
+            //get the opponent's id from the onlineGames array
+            let thisGame = onlineGames.find(
+              (game: any) => game.matchId === data.matchId
+            );
+            console.log(`thisGame: ${JSON.stringify(thisGame)}`);
+            let opponentId =
+              msgFor === "host" ? thisGame.hostId : thisGame.guestId;
+            //send the message to the opponent
+            const client = this.clients.get(opponentId);
+            if (client) {
+              client.sendUTF(message.utf8Data);
+              console.log(`Sent Message to ${opponentId}`);
             }
-        });
-  
+            // //send the message to the sender
+            // connection.sendUTF(message.utf8Data);
+            // console.log(`Sent Message to ${userID}`);
 
+            // //send the message to all other users
+            // this.clients.forEach((otherConnection, key) => {
+            //     if (key !== userID) {
+            //         otherConnection.sendUTF(message.utf8Data);
+            //         console.log(`Sent Message to ${key}`);
+            //     }
+            // });
+          } catch (error) {
+            console.log(error);
+          }
+        }
+      });
 
-        connection.on('close', () => {
-            clients.delete(userID);
-            console.log(`User ${userID} disconnected.`);
-        });
+      connection.on("close", () => {
+        this.clients.delete(userID);
+        console.log(`User ${userID} disconnected.`);
+      });
     });
-};
+  }
+
+  public sendMessage(clientId: string, message: string) {
+    const client = this.clients.get(clientId);
+    if (client) {
+      client.sendUTF(message);
+    }
+  }
+}

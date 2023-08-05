@@ -5,16 +5,19 @@ import * as cors from "cors";
 import { Request, Response } from "express";
 import { AppDataSource } from "./data-source";
 import { Routes } from "./routes";
-import { createWebSocketServer } from "./WebSocketServer";
+import {WebSocketServer} from "./WebSocketServer";
+
+const port = 8001;
+export const webSocketServerInstance = new WebSocketServer(port);
+
 
 AppDataSource.initialize()
   .then(async () => {
     const dotenv = require("dotenv");
     dotenv.config();
 
-    // Set the desired port for the chat WebSocket server
-    const chatWebSocketPort = process.env.CHAT_WEBSOCKET_PORT || 8001;
-    createWebSocketServer(chatWebSocketPort);
+    
+
     // create express app
 
     const app = express();

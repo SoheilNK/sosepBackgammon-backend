@@ -1,7 +1,8 @@
 import { AppDataSource } from "../data-source";
 import { User } from "../entity/User";
 import { NextFunction, Request, Response } from "express";
-import clients from "../WebSocketServer";
+import * as interfaces from "../interfaces";
+import {webSocketServerInstance} from "../index";
 
 // Define an interface for the OnlineGame object
 export interface OnlineGame {
@@ -70,7 +71,7 @@ export class GameController {
     let result = response.locals.result;
     console.log("result from joinOnlineGame: " + JSON.stringify(result));
     let username = result.userName;
-    console.log("result from joinOnlineGame: " + username);
+    console.log("userName from joinOnlineGame: " + username);
     let matchId = request.body.matchId;
     console.log("matchId from joinOnlineGame: " + matchId);
     let guestName = username;
@@ -94,17 +95,23 @@ export class GameController {
     );
     onlineGames[index] = onlineGame;
 
-    //send onlineGame via wsServer to host
-    let hostId = onlineGame.hostId;
-    const client = clients.get(hostId);
-    if (client) {
-      client.send(
-        JSON.stringify({
-          type: "joinOnlineGame",
-          payload: onlineGame,
-        })
-      );
-    }
+    // //send onlineGame via wsServer to host
+    // let hostId = onlineGame.hostId;
+    // let onlineUser: OnlineUser = {
+    //   userId: result.userId,
+    //   userName: result.userName,
+    //   status: "Playing",
+    // };
+    
+    // const client = clients.get(hostId);
+    // if (client) {
+    //   client.send(
+    //     JSON.stringify({
+    //       type: "userJoined",
+    //       data: onlineUser,
+    //     })
+    //   );
+    // }
 
 
 
@@ -141,8 +148,23 @@ export class GameController {
         onlineGames[index] = newOnlineGame;
 
         //send onlineGame via wsServer to host
-
+        let hostId = newOnlineGame.hostId;
+        let guestId = newOnlineGame.guestId;
+        if (guestId) {
+          webSocketServerInstance.sendMessage(
+            hostId,
+            JSON.stringify({ type: "gameJoined", data: newOnlineGame })
+          );
+          // const client = wsServer.clients.get(guestId);
+          //  if (client) {
+          //   client.send(
+          //     JSON.stringify({ type: "gameJoined", data: newOnlineGame })
+          //   );
+          // }
+        }
+        
+          
         // Return the updated online game
-        return newOnlineGame;
+        // return newOnlineGame;
     }
 }
