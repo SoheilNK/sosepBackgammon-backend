@@ -13,7 +13,6 @@ interface ClaimVerifyRequest {
 
 interface ClaimVerifyResult {
     readonly userName: string;
-    readonly clientId: string;
     readonly isValid: boolean;
     readonly error?: any;
     readonly email: string;
@@ -57,6 +56,7 @@ interface Claim {
 
 
 export const checkJwtCognito = async (request: ClaimVerifyRequest, res: Response, next: NextFunction) => {
+    console.log('checkJwtCognito middleware called')
     const cognitoPoolId = process.env.COGNITO_POOL_ID || '';
     if (!cognitoPoolId) {
         throw new Error('env var required for cognito pool');
@@ -88,17 +88,24 @@ export const checkJwtCognito = async (request: ClaimVerifyRequest, res: Response
     const verifyPromised = promisify(jsonwebtoken.verify.bind(jsonwebtoken));
     let result: ClaimVerifyResult;
     // console.log(` 0- Checking token..`);
+    let email: string;
     try {
         const access_token = request.headers.authorization.split("Bearer ")[1];
         const access_tokenSections = (access_token || '').split('.');
         const x_id_token = request.headers.x_id_token;
-        //isolate email from x_id_token
+        if (!x_id_token) {
+            console.log('x_id_token header not found');
+        } else {
+            console.log(`x_id_token: ${x_id_token}`);
+                    //isolate email from x_id_token
         const x_id_tokenSections = (x_id_token || '').split('.');
         const x_id_tokenJSON = Buffer.from(x_id_tokenSections[1], 'base64').toString('utf8');
         const x_id_tokenClaim = JSON.parse(x_id_tokenJSON) as Claim;
         // console.table(`x_id_tokenClaim: ${x_id_tokenClaim}`);
-        const email = x_id_tokenClaim.email;
+        email = x_id_tokenClaim.email;
         // console.log(`x_id_tokenClaim.email: ${email}`);
+        }
+
 
         if (access_tokenSections.length < 2) {
             throw new Error('requested token is invalid');
@@ -129,11 +136,10 @@ export const checkJwtCognito = async (request: ClaimVerifyRequest, res: Response
             throw new Error('claim use is not access');
         }
         console.log(`claim confirmed for ${claim.username}`);
-        result = { userName: claim.username, clientId: claim.client_id, isValid: true, email: email };
+        result = { userName: claim.username, isValid: true, email: email };
         res.locals.result = result;
 
     } catch (error) {
-        // result = { userName: '', clientId: '', error, isValid: false };
         console.log(`error: ${error}`);
         res.status(401).send(`unauthorized ${error}`);
         return;
