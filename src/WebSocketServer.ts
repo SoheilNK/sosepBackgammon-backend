@@ -1,8 +1,6 @@
-import { IMessageEvent, w3cwebsocket } from "websocket";
+import { w3cwebsocket as W3CWebSocket, IMessageEvent } from "websocket";
 import * as types from "./types";
 import { onlineGames } from "./controllers/GameController";
-
-
 
 const getUniqueID = () => {
   var s4 = () =>
@@ -13,11 +11,11 @@ const getUniqueID = () => {
 };
 
 export class WebSocketServer {
-  private clients: Map<string, w3cwebsocket>;
+  static clients: Map<string, W3CWebSocket>;
   private webSocketServer: any; // Type it properly to avoid any
 
   constructor(port: number) {
-    this.clients = new Map<string, w3cwebsocket>();
+    WebSocketServer.clients = new Map<string, W3CWebSocket>();
     const webSocketServer = require("websocket").server;
     const http = require("http");
 
@@ -36,19 +34,20 @@ export class WebSocketServer {
 
       const connection = request.accept(null, request.origin);
 
-      if (request.key && this.clients.has(request.key)) {
+      if (request.key && WebSocketServer.clients.has(request.key)) {
         userID = request.key;
         console.log(`User ${userID} reconnected.`);
       } else {
         userID = getUniqueID();
-        this.clients.set(userID, connection);
+        WebSocketServer.clients.set(userID, connection);
         console.log(`New user ${userID} connected.`);
         //send back userID to the client
-        let msg: types.DataFromServer = {
+        let msg: types.WsData = {
           type: "userID",
           msg: userID,
           user: "",
           matchId: "",
+          msgFor: "all",
         };
         connection.sendUTF(JSON.stringify(msg));
         //update onlinemages
@@ -58,7 +57,7 @@ export class WebSocketServer {
         "WebSocket-connected for user id: " +
           userID +
           " in " +
-          Array.from(this.clients.keys())
+          Array.from(WebSocketServer.clients.keys())
       );
       let onlineUser: types.OnlineUser = {
         userId: userID,
@@ -66,31 +65,47 @@ export class WebSocketServer {
         status: "Online",
       };
       let thisGame: types.OnlineGame;
-      connection.on("message", (message: IMessageEvent) => {
+      connection.on("message", (message) => {
         if (message.type === "utf8") {
           try {
             console.log("Received Message: ", message.utf8Data);
-            let data = JSON.parse(message.utf8Data);
+            let data: types.WsData = JSON.parse(message.utf8Data);
             let msgFor = data.msgFor;
-            //get the opponent's id from the onlineGames array
-            thisGame = onlineGames.find(
-              (game: any) => game.matchId === data.matchId
-            );
-            console.log(`thisGame: ${JSON.stringify(thisGame)}`);
-            let opponentId =
-              msgFor === "host" ? thisGame.hostId : thisGame.guestId;
-            //send the message to the opponent
-            const client = this.clients.get(opponentId);
-            if (client) {
-              client.sendUTF(message.utf8Data);
-              console.log(`Sent Message to ${opponentId}`);
+            if (msgFor === "all") {
+              //send the message to all users
+              WebSocketServer.clients.forEach((connection, key) => {
+                connection.send(message.utf8Data);
+                console.log(`Sent Message to ${key}`);
+              });
+            } else {
+              
+              //get the opponent's id from the onlineGames array
+              thisGame = onlineGames.find(
+                (game: any) => game.matchId === data.matchId
+              );
+              console.log(`thisGame: ${JSON.stringify(thisGame)}`);
+              let opponentId =
+                msgFor === "host" ? thisGame.hostId : thisGame.guestId;
+              //send the message to the opponent
+              const client = WebSocketServer.clients.get(opponentId);
+              if (client) {
+                client.send(message.utf8Data);
+                console.log(`Sent Message to ${opponentId}`);
+              }
             }
+
+            //for chat messages send the message to the sender too
+            if (data.type === "chat") {
+              connection.sendUTF(message.utf8Data);
+              console.log(`Sent Message to ${userID}`);
+            }
+            
             // //send the message to the sender
             // connection.sendUTF(message.utf8Data);
             // console.log(`Sent Message to ${userID}`);
 
             // //send the message to all other users
-            // this.clients.forEach((otherConnection, key) => {
+            // WebSocketServer.clients.forEach((otherConnection, key) => {
             //     if (key !== userID) {
             //         otherConnection.sendUTF(message.utf8Data);
             //         console.log(`Sent Message to ${key}`);
@@ -103,7 +118,7 @@ export class WebSocketServer {
       });
 
       connection.on("close", () => {
-        this.clients.delete(userID);
+        WebSocketServer.clients.delete(userID);
         console.log(`User ${userID} disconnected.`);
         //if the host left remove the mathid from the onlineGames array
         if (thisGame && thisGame.hostId === userID) {
@@ -115,9 +130,9 @@ export class WebSocketServer {
   }
 
   public sendMessage(clientId: string, message: string) {
-    const client = this.clients.get(clientId);
+    const client = WebSocketServer.clients.get(clientId);
     if (client) {
-      client.sendUTF(message);
+      client.send(message);
     }
   }
 }

@@ -1,46 +1,36 @@
 //online game user
-export interface OnlineUser {
-    userId: string;
-    userName: string;
-    status: string;
-}
+export type OnlineUser = {
+  userId: string;
+  userName: string;
+  status: string;
+};
 
 //online users array
-export interface OnlineUsers {
-    users: OnlineUser[];
-}
+export type OnlineUsers = {
+  users: OnlineUser[];
+};
 
-export interface Message {
+export type WsData = {
+  type: "chat" | "game" | "userID" | "gameJoined";
   msg: string;
-  user: string;
+  user: string; //sender username
   matchId: string;
-  msgFor: string;
-}
+  msgFor: "host" | "guest" | "all";
+};
 
-export interface DataFromServer {
-  type: string;
-  msg: string;
-  user: string;
-  matchId: string;
-}
-
-export interface ChatState {
+export type ChatState = {
   userName: string;
   isLoggedIn: boolean;
-  messages: Message[];
+  messages: WsData[];
   searchVal: string;
-}
+};
 
-// Define an interface for the OnlineGame object
-export interface OnlineGame {
+// Define an type for the OnlineGame object
+export type OnlineGame = {
   matchId: string;
   hostName: string;
   guestName: string;
   hostId: string;
   guestId: string;
   status: string;
-}
-
-
-
-
+};

@@ -3,6 +3,7 @@ import { User } from "../entity/User";
 import { NextFunction, Request, Response } from "express";
 import * as interfaces from "../types";
 import {webSocketServerInstance} from "../index";
+import * as type from "../types";
 
 // Define an interface for the OnlineGame object
 export interface OnlineGame {
@@ -150,10 +151,17 @@ export class GameController {
         //send onlineGame via wsServer to host
         let hostId = newOnlineGame.hostId;
         let guestId = newOnlineGame.guestId;
-        if (guestId) {
+      if (guestId) {
+        let msg: type.WsData = {
+          type: "gameJoined",
+          msg: JSON.stringify(newOnlineGame),
+          user: "",
+          matchId: "",
+          msgFor: "host",
+        };
           webSocketServerInstance.sendMessage(
             hostId,
-            JSON.stringify({ type: "gameJoined", data: newOnlineGame })
+            JSON.stringify(msg)
           );
           // const client = wsServer.clients.get(guestId);
           //  if (client) {
