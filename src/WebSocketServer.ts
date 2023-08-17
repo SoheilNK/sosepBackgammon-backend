@@ -10,6 +10,8 @@ const getUniqueID = () => {
   return s4() + s4() + "-" + s4();
 };
 
+const onlineUsers : types.OnlineUser[] = [];
+
 export class WebSocketServer {
   static clients: Map<string, W3CWebSocket>;
   private webSocketServer: any; // Type it properly to avoid any
@@ -50,6 +52,7 @@ export class WebSocketServer {
           msgFor: "all",
         };
         connection.sendUTF(JSON.stringify(msg));
+
         //update onlinemages
       }
 
@@ -57,13 +60,16 @@ export class WebSocketServer {
         "WebSocket-connected for user id: " +
           userID +
           " in " +
-          Array.from(WebSocketServer.clients.keys())
+          Array.from(WebSocketServer.clients.keys()) + " and userID sent to client "
       );
       let onlineUser: types.OnlineUser = {
         userId: userID,
         userName: "",
         status: "Online",
       };
+      onlineUsers.push(onlineUser);
+      console.log(`onlineUsers: ${JSON.stringify(onlineUsers)}`);
+
       let thisGame: types.OnlineGame;
       connection.on("message", (message) => {
         if (message.type === "utf8") {
@@ -99,7 +105,7 @@ export class WebSocketServer {
               connection.sendUTF(message.utf8Data);
               console.log(`Sent Message to ${userID}`);
             }
-            
+
             // //send the message to the sender
             // connection.sendUTF(message.utf8Data);
             // console.log(`Sent Message to ${userID}`);
@@ -120,11 +126,18 @@ export class WebSocketServer {
       connection.on("close", () => {
         WebSocketServer.clients.delete(userID);
         console.log(`User ${userID} disconnected.`);
-        //if the host left remove the mathid from the onlineGames array
+        //if the host left remove the matchid from the onlineGames array
         if (thisGame && thisGame.hostId === userID) {
           onlineGames.splice(onlineGames.indexOf(thisGame), 1);
           console.log(`Removed ${thisGame.matchId} from onlineGames array`);
         }
+        //update onlineUsers
+        let index = onlineUsers.findIndex(
+          (onlineUser) => onlineUser.userId === userID
+        );
+        onlineUsers.splice(index, 1);
+        console.log(`onlineUsers: ${JSON.stringify(onlineUsers)}`);
+        
       });
     });
   }

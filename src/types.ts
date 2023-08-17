@@ -5,13 +5,8 @@ export type OnlineUser = {
   status: string;
 };
 
-//online users array
-export type OnlineUsers = {
-  users: OnlineUser[];
-};
-
 export type WsData = {
-  type: "chat" | "game" | "userID" | "gameJoined";
+  type: "chat" | "game" | "userID" | "gameJoined" | "newGame";
   msg: string;
   user: string; //sender username
   matchId: string;
