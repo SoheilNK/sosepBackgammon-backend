@@ -98,15 +98,15 @@ export class GameController {
     let status = "Playing";
 
     //read onlineUser from request body
-    let onlineUser: type.OnlineUser = JSON.parse(request.body.onlineUser);
-    console.log("onlineUser from joinOnlineGame: " + onlineUser);
+    const onlineGeust: type.OnlineUser = JSON.parse(request.body.onlineUser);
+    console.log("onlineUser from joinOnlineGame: " + onlineGeust);
 
-    if (onlineUser.userName === username) {
-      console.log("onlineUser.userName === username");
-    } else {
-      console.log("onlineUser.userName !== username");
-      return error("onlineUser.userName !== username");
-    }
+    // if (onlineUser.userName === username) {
+    //   console.log("onlineUser.userName === username");
+    // } else {
+    //   console.log("onlineUser.userName !== username");
+    //   return error("onlineUser.userName !== username");
+    // }
 
     // Find the online game with the specified matchId
     const onlineGame = onlineGames.find(
@@ -117,8 +117,8 @@ export class GameController {
     }
 
     // Update the online game
-    onlineGame.guestName = onlineUser.userName;
-    onlineGame.guestId = onlineUser.userId;
+    onlineGame.guestName = onlineGeust.userName;
+    onlineGame.guestId = onlineGeust.userId;
     onlineGame.status = status;
 
     //Update onlineGames array
@@ -126,77 +126,22 @@ export class GameController {
       (onlineGame) => onlineGame.matchId === matchId
     );
     onlineGames[index] = onlineGame;
-
-    // //send onlineGame via wsServer to host
-    // let hostId = onlineGame.hostId;
-    // let onlineUser: OnlineUser = {
-    //   userId: result.userId,
-    //   userName: result.userName,
-    //   status: "Playing",
-    // };
-
-    // const client = clients.get(hostId);
-    // if (client) {
-    //   client.send(
-    //     JSON.stringify({
-    //       type: "userJoined",
-    //       data: onlineUser,
-    //     })
-    //   );
-    // }
-
-    // Return the updated online game
-    return onlineGame;
-  }
-
-  // Add a method to update an online game
-  async updateOnlineGame(
-    request: Request,
-    response: Response,
-    next: NextFunction
-  ) {
-    console.log("update online game");
-    //read onlineGame from request body
-    let newOnlineGame = request.body.onlineGame;
-
-    // // Find the online game with the specified matchId
-    // const onlineGame = onlineGames.find(
-    //     (onlineGame) => onlineGame.matchId === newOnlineGame.matchId
-    // );
-    // if (!onlineGame) {
-    //     throw new Error(`Cannot find online game with matchId: ${matchId}`);
-    // }
-
-    // // Update the online game
-    // onlineGame.status = status;
-
-    //Update onlineGames array
-    const index = onlineGames.findIndex(
-      (onlineGame) => onlineGame.matchId === newOnlineGame.matchId
-    );
-    onlineGames[index] = newOnlineGame;
-
+    console.log("joined Game: " + onlineGame);
+   
     //send onlineGame via wsServer to host
-    let hostId = newOnlineGame.hostId;
-    let guestId = newOnlineGame.guestId;
+    let hostId = onlineGame.hostId;
+    let guestId = onlineGame.guestId;
     if (guestId) {
-      let msg: type.WsData = {
+      let weMessage: type.WsData = {
         type: "gameJoined",
-        msg: JSON.stringify(newOnlineGame),
+        msg: onlineGame as any,
         user: "",
         matchId: "",
         msgFor: "host",
       };
-      webSocketServerInstance.sendMessage(hostId, JSON.stringify(msg));
-      // const client = wsServer.clients.get(guestId);
-      //  if (client) {
-      //   client.send(
-      //     JSON.stringify({ type: "gameJoined", data: newOnlineGame })
-      //   );
-      // }
+      webSocketServerInstance.sendMessage(hostId, JSON.stringify(weMessage));
     }
-
-    // Return the updated online game
-    // return newOnlineGame;
+    return onlineGame;
   }
+
 }

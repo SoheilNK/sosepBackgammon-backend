@@ -39,13 +39,5 @@ export const Routes = [
     middlewares: [checkJwtCognito],
     action: "joinOnlineGame",
   },
-  {
-    //Update an online game
-    method: "post",
-    route: "/api/games/update",
-    controller: GameController,
-    middlewares: [checkJwtCognito],
-    action: "updateOnlineGame",
-  },
 ];
 
