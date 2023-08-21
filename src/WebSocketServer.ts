@@ -1,4 +1,4 @@
-import { IMessageEvent, w3cwebsocket } from "websocket";
+import { IMessageEvent, w3cwebsocket } from "ws";
 import * as types from "./types";
 import { onlineGames } from "./controllers/GameController";
 
