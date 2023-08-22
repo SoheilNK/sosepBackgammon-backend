@@ -46,9 +46,7 @@ export class WebSocketServer {
         //send back userID to the client
         let msg: types.DataFromServer = {
           type: "userID",
-          msg: userID,
-          user: "",
-          matchId: "",
+          data: userID,
         };
         connection.sendUTF(JSON.stringify(msg));
         //update onlinemages
@@ -70,20 +68,32 @@ export class WebSocketServer {
         if (message.type === "utf8") {
           try {
             console.log("Received Message: ", message.utf8Data);
-            let data = JSON.parse(message.utf8Data);
-            let msgFor = data.msgFor;
+            let wsMessage = JSON.parse(message.utf8Data) as types.WsMessage;
+            let msgFor = wsMessage.msgFor;
             //get the opponent's id from the onlineGames array
             thisGame = onlineGames.find(
-              (game: any) => game.matchId === data.matchId
+              (game: any) => game.matchId === wsMessage.matchId
             );
             console.log(`thisGame: ${JSON.stringify(thisGame)}`);
             let opponentId =
               msgFor === "host" ? thisGame.hostId : thisGame.guestId;
+            let senderId =
+              msgFor === "guest" ? thisGame.hostId : thisGame.guestId;
             //send the message to the opponent
             const client = this.clients.get(opponentId);
             if (client) {
-              client.sendUTF(message.utf8Data);
+              client.sendUTF(
+                JSON.stringify({ type: wsMessage.type, data: wsMessage })
+              );
               console.log(`Sent Message to ${opponentId}`);
+            }
+            if (wsMessage.type === "chat") {
+              //send the message to the sender
+              const sender = this.clients.get(senderId);
+              sender.sendUTF(
+                JSON.stringify({ type: wsMessage.type, data: wsMessage })
+              );
+              console.log(`Sent Message to ${senderId}`);
             }
             // //send the message to the sender
             // connection.sendUTF(message.utf8Data);
