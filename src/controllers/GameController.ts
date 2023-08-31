@@ -111,14 +111,24 @@ export class GameController {
 
     //Update onlineGames array
     // Find the online game with the specified matchId
+    console.log(`onlineGames: ${JSON.stringify(onlineGames)}`);
     const index = onlineGames.findIndex(
       (onlineGame) => onlineGame.matchId === newOnlineGame.matchId
     );
-    let oldOnlineGame = onlineGames[index];  
-    let oldGuestId = oldOnlineGame.guestId;
+    let oldOnlineGame = onlineGames[index];
+
+    if (index === -1) {
+      console.log(
+        `Cannot find online game with matchId: ${newOnlineGame.matchId}`
+      );
+      //add new online game to onlineGames array
+      onlineGames.push(newOnlineGame);
+      oldOnlineGame = newOnlineGame;
+    }
+    let oldGuestId = oldOnlineGame.guestId || "";
     console.log(`oldOnlineGame: ${JSON.stringify(oldOnlineGame)}`);
-    if (!oldOnlineGame) {
-      throw new Error(
+    if (oldOnlineGame.matchId === "") {
+      console.log(
         `Cannot find online game with matchId: ${newOnlineGame.matchId}`
       );
     } else {
@@ -131,6 +141,8 @@ export class GameController {
         oldOnlineGame.guestName = newOnlineGame.guestName;
       }
       onlineGames[index] = oldOnlineGame;
+      console.log(`new oldOnlineGame: ${JSON.stringify(oldOnlineGame)}`);
+
       //send updated onlineGame via wsServer to host and guest
       webSocketServerInstance.sendMessage(
         oldOnlineGame.guestId,
