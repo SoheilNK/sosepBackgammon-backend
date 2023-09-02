@@ -46,6 +46,12 @@ export class GameController {
     console.log(
       `You have successfully added online game "${newOnlineGame.matchId}" to database`
     );
+    //send new onlineGame via wsServer to all users
+    console.log(`send new onlineGame via wsServer to all users`);
+    webSocketServerInstance.sendMessage(
+      "all",
+      JSON.stringify({ type: "newGame", data: newOnlineGame })
+    );
     // Return the newly added online game
     return newOnlineGame;
   }

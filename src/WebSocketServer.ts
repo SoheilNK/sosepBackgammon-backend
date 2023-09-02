@@ -125,6 +125,13 @@ export class WebSocketServer {
   }
 
   public sendMessage(clientId: string, message: string) {
+    if (clientId === "all") {
+      this.clients.forEach((client) => {
+        client.sendUTF(message);
+      });
+      return;
+    }
+    
     const client = this.clients.get(clientId);
     if (client) {
       client.sendUTF(message);
