@@ -25,10 +25,14 @@ export class GameController {
     response: Response,
     next: NextFunction
   ) {
-    console.log("add online game");
+    console.log("adding online game...");
     let result = response.locals.result;
     // console.log("result from addOnlineGame: " + JSON.stringify(result));
-    let username = result.userName;
+    // read onlineUser from request body
+    const onlineUser = request.body.onlineUser;
+    const username = onlineUser.userName;
+    const userId = onlineUser.userId;
+
     // console.log("result from addOnlineGame: " + username);
     let matchId = Date.now().toString();
 
@@ -36,8 +40,8 @@ export class GameController {
     const newOnlineGame: OnlineGame = {
       matchId: matchId,
       hostName: username,
+      hostId: userId,
       guestName: "",
-      hostId: "",
       guestId: "",
       status: "Waiting for guest",
     };
@@ -46,11 +50,11 @@ export class GameController {
     console.log(
       `You have successfully added online game "${newOnlineGame.matchId}" to database`
     );
-    //send new onlineGame via wsServer to all users
-    console.log(`send new onlineGame via wsServer to all users`);
+    //send new onlineGames list via wsServer to all users
+    console.log(`sending new onlineGames list via wsServer to all users`);
     webSocketServerInstance.sendMessage(
       "all",
-      JSON.stringify({ type: "newGame", data: newOnlineGame })
+      JSON.stringify({ type: "newGameList", data: onlineGames })
     );
     // Return the newly added online game
     return newOnlineGame;
@@ -71,15 +75,17 @@ export class GameController {
     response: Response,
     next: NextFunction
   ) {
-    console.log("join online game");
+    console.log("joining online game: " + JSON.stringify(request.body.matchId));
     let result = response.locals.result;
     // console.log("result from joinOnlineGame: " + JSON.stringify(result));
-    let username = result.userName;
+    const onlineUser = request.body.onlineUser;
+    const username = onlineUser.userName;
+    const userId = onlineUser.userId;
     console.log("userName from joinOnlineGame: " + username);
-    let matchId = request.body.matchId;
+    const matchId = request.body.matchId;
     // console.log("matchId from joinOnlineGame: " + matchId);
-    let guestName = username;
-    let status = "Playing";
+    const guestName = username;
+    const status = "Playing";
 
     // Find the online game with the specified matchId
     const onlineGame = onlineGames.find(
@@ -91,6 +97,7 @@ export class GameController {
 
     // Update the online game
     onlineGame.guestName = guestName;
+    onlineGame.guestId = userId;
     onlineGame.status = status;
 
     //Update onlineGames array
@@ -98,6 +105,12 @@ export class GameController {
       (onlineGame) => onlineGame.matchId === matchId
     );
     onlineGames[index] = onlineGame;
+
+    //send updated onlineGame via wsServer to host
+    webSocketServerInstance.sendMessage(
+      onlineGame.hostId,
+      JSON.stringify({ type: "gameJoined", data: onlineGame })
+    );
 
     // Return the updated online game
     return onlineGame;

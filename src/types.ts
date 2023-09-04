@@ -5,10 +5,10 @@ export interface OnlineUser {
     status: string;
 }
 
-//online users array
-export interface OnlineUsers {
-    users: OnlineUser[];
-}
+// //online users array
+// export interface OnlineUsers {
+//     users: OnlineUser[];
+// }
 
 export interface WsMessage {
   type: string;
