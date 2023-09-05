@@ -1,15 +1,15 @@
 import { IMessageEvent, w3cwebsocket } from "ws";
 import * as types from "./types";
 import { onlineGames } from "./controllers/GameController";
-import { json } from "body-parser";
+// import { json } from "body-parser";
 
-const getUniqueID = () => {
-  var s4 = () =>
-    Math.floor((1 + Math.random()) * 0x10000)
-      .toString(16)
-      .substring(1);
-  return s4() + s4() + "-" + s4();
-};
+// const getUniqueID = () => {
+//   var s4 = () =>
+//     Math.floor((1 + Math.random()) * 0x10000)
+//       .toString(16)
+//       .substring(1);
+//   return s4() + s4() + "-" + s4();
+// };
 
 export class WebSocketServer {
   private clients: Map<string, w3cwebsocket>;
@@ -97,6 +97,7 @@ export class WebSocketServer {
             }
             if (wsMessage.type === "chat") {
               //send the message to the sender
+              console.log(`clients: ${JSON.stringify(this.clients)}`);
               const sender = this.clients.get(senderId);
               sender.sendUTF(
                 JSON.stringify({ type: wsMessage.type, data: wsMessage })
@@ -123,10 +124,17 @@ export class WebSocketServer {
       connection.on("close", () => {
         this.clients.delete(userID);
         console.log(`User ${userID} disconnected.`);
-        //if the host left remove the mathid from the onlineGames array
+        //if the host left remove the matchId from the onlineGames array
         if (thisGame && thisGame.hostId === userID) {
           onlineGames.splice(onlineGames.indexOf(thisGame), 1);
           console.log(`Removed ${thisGame.matchId} from onlineGames array`);
+          this.sendMessage(
+            "all",
+            JSON.stringify({ 
+              type: "newGameList",
+              data: onlineGames
+            })
+          );
         }
       });
     });

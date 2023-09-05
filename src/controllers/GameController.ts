@@ -191,4 +191,73 @@ export class GameController {
       }
     }
   }
+
+  // Add a method to leave an online game
+  async leaveOnlineGame(
+    request: Request,
+    response: Response,
+    next: NextFunction
+  ) {
+    console.log("leaving online game");
+    //read onlineGame from request body
+    let onlineGame = request.body.onlineGame;
+    //read roll from request body
+    let roll = request.body.roll;
+
+    //Update onlineGames array
+    // Find the online game with the specified matchId
+    console.log(`onlineGames: ${JSON.stringify(onlineGames)}`);
+    const index = onlineGames.findIndex(
+      (onlineGame) => onlineGame.matchId === onlineGame.matchId
+    );
+    let oldOnlineGame = onlineGames[index];
+
+    if (index === -1) {
+      console.log(
+        `Cannot find online game with matchId: ${onlineGame.matchId}`
+      );
+    } else {
+      // Update the online game after leaving
+      if (roll === "host" && oldOnlineGame.guestId === "") {
+        //remove the onlineGame from the onlineGames array
+        onlineGames.splice(index, 1);
+        console.log(`Removed ${onlineGame.matchId} from onlineGames array`);
+        webSocketServerInstance.sendMessage(
+          "all",
+          JSON.stringify({ type: "newGameList", data: onlineGames })
+        );
+      } else {
+        if (roll === "host" && oldOnlineGame.guestId !== "") {
+          //remove the hostId from the online game and make the guest the host
+          oldOnlineGame.hostId = oldOnlineGame.guestId;
+          oldOnlineGame.hostName = oldOnlineGame.guestName;
+          oldOnlineGame.guestId = "";
+          oldOnlineGame.guestName = "";
+          oldOnlineGame.status = "Waiting for guest";
+          webSocketServerInstance.sendMessage(
+            oldOnlineGame.hostId,
+            JSON.stringify({
+              type: "hostLeft",
+              data: oldOnlineGame,
+            })
+          );
+        } else if (roll === "guest") {
+          //remove the guestId from the online game
+          oldOnlineGame.guestId = "";
+          oldOnlineGame.guestName = "";
+          oldOnlineGame.status = "Waiting for guest";
+          webSocketServerInstance.sendMessage(
+            oldOnlineGame.hostId,
+            JSON.stringify({
+              type: "guestLeft",
+              data: oldOnlineGame,
+            })
+          );
+          //Update onlineGames array
+          onlineGames[index] = oldOnlineGame;
+          console.log(`new oldOnlineGame: ${JSON.stringify(oldOnlineGame)}`);
+        }
+      }
+    }
+  }
 }
