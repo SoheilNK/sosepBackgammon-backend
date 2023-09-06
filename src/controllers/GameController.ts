@@ -54,7 +54,7 @@ export class GameController {
     console.log(`sending new onlineGames list via wsServer to all users`);
     webSocketServerInstance.sendMessage(
       "all",
-      JSON.stringify({ type: "newGameList", data: onlineGames })
+      JSON.stringify({ type: "newGameList1", data: onlineGames })
     );
     // Return the newly added online game
     return newOnlineGame;
@@ -105,6 +105,12 @@ export class GameController {
       (onlineGame) => onlineGame.matchId === matchId
     );
     onlineGames[index] = onlineGame;
+    //send new onlineGames list via wsServer to all users
+    console.log(`sending new onlineGames list via wsServer to all users`);
+    webSocketServerInstance.sendMessage(
+      "all",
+      JSON.stringify({ type: "newGameList", data: onlineGames })
+    );
 
     //send updated onlineGame via wsServer to host
     webSocketServerInstance.sendMessage(
