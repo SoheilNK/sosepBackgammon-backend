@@ -47,5 +47,13 @@ export const Routes = [
     middlewares: [checkJwtCognito],
     action: "updateOnlineGame",
   },
+  {
+    //leave an online game
+    method: "post",
+    route: "/api/games/leave",
+    controller: GameController,
+    middlewares: [checkJwtCognito],
+    action: "leaveOnlineGame",
+  },
 ];
 

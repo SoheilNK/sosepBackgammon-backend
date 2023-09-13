@@ -5,12 +5,13 @@ export interface OnlineUser {
   status: string;
 }
 
-//online users array
-export interface OnlineUsers {
-    users: OnlineUser[];
-}
+// //online users array
+// export interface OnlineUsers {
+//     users: OnlineUser[];
+// }
 
-export interface Message {
+export interface WsMessage {
+  type: string;
   msg: string;
   user: string;
   matchId: string;
@@ -19,15 +20,13 @@ export interface Message {
 
 export interface DataFromServer {
   type: string;
-  msg: string;
-  user: string;
-  matchId: string;
+  data: string;
 }
 
 export interface ChatState {
   userName: string;
   isLoggedIn: boolean;
-  messages: Message[];
+  messages: WsMessage[];
   searchVal: string;
 }
 
