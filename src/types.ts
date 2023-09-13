@@ -1,8 +1,8 @@
 //online game user
 export interface OnlineUser {
-    userId: string;
-    userName: string;
-    status: string;
+  userId: string;
+  userName: string;
+  status: string;
 }
 
 // //online users array
