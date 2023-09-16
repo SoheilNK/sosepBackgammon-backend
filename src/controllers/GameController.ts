@@ -54,7 +54,7 @@ export class GameController {
     console.log(`sending new onlineGames list via wsServer to all users`);
     webSocketServerInstance.sendMessage(
       "all",
-      JSON.stringify({ type: "newGameList1", data: onlineGames })
+      JSON.stringify({ type: "newGameList", data: onlineGames })
     );
     // Return the newly added online game
     return newOnlineGame;
