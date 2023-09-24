@@ -102,7 +102,7 @@ export class GameController {
 
     //Update onlineGames array
     const index = onlineGames.findIndex(
-      (onlineGame) => onlineGame.matchId === matchId
+      (game) => game.matchId === matchId
     );
     onlineGames[index] = onlineGame;
     //send new onlineGames list via wsServer to all users
@@ -206,34 +206,38 @@ export class GameController {
   ) {
     console.log("leaving online game");
     //read onlineGame from request body
-    let onlineGame = request.body.onlineGame;
+    let newOnlineGame = request.body.onlineGame;
     //read roll from request body
     let roll = request.body.roll;
 
     //Update onlineGames array
     // Find the online game with the specified matchId
-    console.log(`onlineGames: ${JSON.stringify(onlineGames)}`);
+    console.log(`onlineGames: ${JSON.stringify(onlineGames.map(onlineGame => onlineGame.matchId))}`);
     const index = onlineGames.findIndex(
-      (onlineGame) => onlineGame.matchId === onlineGame.matchId
+      (onlineGame) => onlineGame.matchId === newOnlineGame.matchId
     );
     let oldOnlineGame = onlineGames[index];
 
     if (index === -1) {
       console.log(
-        `Cannot find online game with matchId: ${onlineGame.matchId}`
+        `Cannot find online game with matchId: ${newOnlineGame.matchId}`
       );
     } else {
       // Update the online game after leaving
       if (roll === "host" && oldOnlineGame.guestId === "") {
+        //host is leaving and there is no guest
+        console.log(`host is leaving and there is no guest`);
         //remove the onlineGame from the onlineGames array
         onlineGames.splice(index, 1);
-        console.log(`Removed ${onlineGame.matchId} from onlineGames array`);
+        console.log(`Removed ${newOnlineGame.matchId} from onlineGames array`);
         webSocketServerInstance.sendMessage(
           "all",
           JSON.stringify({ type: "newGameList", data: onlineGames })
         );
       } else {
         if (roll === "host" && oldOnlineGame.guestId !== "") {
+          //host is leaving and there is a guest
+          console.log(`host is leaving and there is a guest`);
           //remove the hostId from the online game and make the guest the host
           oldOnlineGame.hostId = oldOnlineGame.guestId;
           oldOnlineGame.hostName = oldOnlineGame.guestName;
@@ -247,7 +251,18 @@ export class GameController {
               data: oldOnlineGame,
             })
           );
+          //Update onlineGames array
+          onlineGames[index] = oldOnlineGame;
+          console.log(`new oldOnlineGame: ${JSON.stringify(oldOnlineGame)}`);
+          //send new onlineGames list via wsServer to all users
+          console.log(`sending new onlineGames list via wsServer to all users`);
+          webSocketServerInstance.sendMessage(
+            "all",
+            JSON.stringify({ type: "newGameList", data: onlineGames })
+          );
         } else if (roll === "guest") {
+          //guest is leaving
+          console.log(`guest is leaving`);
           //remove the guestId from the online game
           oldOnlineGame.guestId = "";
           oldOnlineGame.guestName = "";
@@ -262,6 +277,12 @@ export class GameController {
           //Update onlineGames array
           onlineGames[index] = oldOnlineGame;
           console.log(`new oldOnlineGame: ${JSON.stringify(oldOnlineGame)}`);
+          //send new onlineGames list via wsServer to all users
+          console.log(`sending new onlineGames list via wsServer to all users`);
+          webSocketServerInstance.sendMessage(
+            "all",
+            JSON.stringify({ type: "newGameList", data: onlineGames })
+          );
         }
       }
     }
