@@ -263,8 +263,6 @@ export class GameController {
         } else if (roll === "guest") {
           //guest is leaving
           console.log(`guest is leaving`);
-          //print the guest name
-          console.log(`guest name: ${oldOnlineGame.guestName}`);
           //remove the guestId from the online game
           oldOnlineGame.guestId = "";
           oldOnlineGame.guestName = "";

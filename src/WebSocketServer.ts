@@ -75,9 +75,8 @@ export class WebSocketServer {
       connection.on("message", (message: IMessageEvent) => {
         if (message.type === "utf8") {
           try {
+            console.log("Received Message: ", message.utf8Data);
             let wsMessage = JSON.parse(message.utf8Data) as types.WsMessage;
-            //print wsMessage type
-            console.log(`wsMessage.type: ${wsMessage.type}`);
             let msgFor = wsMessage.msgFor;
             //get the opponent's id from the onlineGames array
             thisGame = onlineGames.find(
