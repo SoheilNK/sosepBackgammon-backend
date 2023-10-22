@@ -4,6 +4,7 @@ node_modules/
 build/
 tmp/
 temp/
+.env
 
 #amplify-do-not-edit-begin
 amplify/\#current-cloud-backend
