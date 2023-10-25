@@ -1,12 +1,18 @@
+//routes.ts is the file where we define all our routes for our application.
 import { checkRole } from "./middlewares/checkRole";
 import { UserController } from "./controllers/UserController";
 import { GameController } from "./controllers/GameController";
 import { checkJwtCognito } from "./middlewares/checkJwtCognito";
-
-
-
+import { AuthController } from "./controllers/AuthController";
 
 export const Routes = [
+  //refresh token
+  {
+    method: "post",
+    route: "/api/auth/refresh",
+    controller: AuthController,
+    action: "refreshTokens",
+  },
   {
     //Get all users--
     method: "get",
@@ -56,4 +62,3 @@ export const Routes = [
     action: "leaveOnlineGame",
   },
 ];
-
