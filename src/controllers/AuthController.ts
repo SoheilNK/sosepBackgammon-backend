@@ -1,61 +1,65 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import {
-  CognitoIdentityProviderClient,
-  InitiateAuthCommand,
-} from "@aws-sdk/client-cognito-identity-provider";
-import { inspect } from "util";
-import * as jwt from "jsonwebtoken";
+  CognitoUserPool,
+  CognitoUser,
+  CognitoRefreshToken,
+} from "amazon-cognito-identity-js";
+
+// Assuming you have a Cognito configuration
+const cognitoConfig = {
+  UserPoolId: process.env.COGNITO_USER_POOL_ID,
+  ClientId: process.env.COGNITO_CLIENT_ID,
+};
 
 export class AuthController {
-  private static cognito = new CognitoIdentityProviderClient({
-    region: process.env.AWS_REGION, // e.g. 'us-east-1'
-  });
+  public async refreshTokens(req: Request, res: Response) {
+    const refreshToken = req.body.refresh_token;
+    //read the username from the  req.body
+    const username = req.body.user_name;
 
-  async refreshTokens(
-    request: Request,
-    response: Response,
-    next: NextFunction
-  ) {
-    console.log("refreshTokens");
-    const refreshToken = request.body.refresh_token;
     if (!refreshToken) {
-      return response.status(400).json({ error: "Refresh token is required" });
+      return res.status(400).send({ message: "Refresh token is required" });
     }
 
-    const command = new InitiateAuthCommand({
-      AuthFlow: "REFRESH_TOKEN_AUTH",
-      ClientId: process.env.COGNITO_CLIENT_ID,
-      AuthParameters: {
-        REFRESH_TOKEN: refreshToken,
-      },
+    const userPool = new CognitoUserPool(cognitoConfig);
+    // // Assuming you have a way to retrieve the username associated with the refresh token
+    // const username = "REPLACE_WITH_USERNAME"; // Replace this with actual username retrieval logic
+    const cognitoUser = new CognitoUser({ Username: username, Pool: userPool });
+    const refreshCognitoToken = new CognitoRefreshToken({
+      RefreshToken: refreshToken,
     });
 
-    try {
-      const authResult = await AuthController.cognito.send(command);
-      console.log("authResult");
-
-      if (authResult.AuthenticationResult) {
-        console.log("authResult.AuthenticationResult");
-
-        const tokens = {
-          access_token: authResult.AuthenticationResult.AccessToken,
-          id_token: authResult.AuthenticationResult.IdToken,
-          refresh_token: refreshToken,
-        };
-        console.log("tokens");
-
-        return tokens; // return tokens without json
-      } else {
-        return response.status(400).json({ error: "Failed to refresh token" });
+    cognitoUser.refreshSession(refreshCognitoToken, (err, session) => {
+      if (err) {
+        console.error(err);
+        if (err.code === "NotAuthorizedException") {
+          return res.status(401).send({ message: "Refresh token has expired" });
+        } else {
+          return res.status(500).send({ message: "Failed to refresh tokens" });
+        }
       }
-    } catch (error) {
-      console.error(error);
-      if (error.name === "NotAuthorizedException") {
-        return response
-          .status(401)
-          .json({ error: "The refresh token is expired or invalid." });
-      }
-      return response.status(500).json({ error: "Internal Server Error" });
+      const tokens = {
+        id_token: session.getIdToken().getJwtToken(),
+        access_token: session.getAccessToken().getJwtToken(),
+        refresh_token: session.getRefreshToken().getToken(),
+      };
+      return res.json(tokens);
     }
+    );
   }
+
+  //     const idToken = session.getIdToken().getJwtToken();
+  //     const accessToken = session.getAccessToken().getJwtToken();
+  //     const newRefreshToken = session.getRefreshToken().getToken();
+
+  //     res.status(200).send({
+  //       idToken,
+  //       accessToken,
+  //       refreshToken: newRefreshToken,
+  //     });
+  //   });
+  // }
+
+  // Other methods and actions of the AuthController can be added here
+  // ...
 }

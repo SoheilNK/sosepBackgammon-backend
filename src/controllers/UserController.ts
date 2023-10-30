@@ -119,7 +119,7 @@ export class UserController {
 
     // AWS Cognito configuration
     const COGNITO_REGION = process.env.AWS_REGION; // e.g. 'us-east-1'
-    const COGNITO_POOL_ID = process.env.COGNITO_POOL_ID;
+    const COGNITO_USER_POOL_ID = process.env.COGNITO_USER_POOL_ID;
     const COGNITO_CLIENT_ID = process.env.COGNITO_CLIENT_ID;
 
     const cognito = new CognitoIdentityServiceProvider({
