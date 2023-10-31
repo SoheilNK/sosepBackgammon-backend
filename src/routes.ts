@@ -6,6 +6,30 @@ import { checkJwtCognito } from "./middlewares/checkJwtCognito";
 import { AuthController } from "./controllers/AuthController";
 
 export const Routes = [
+  // Update user profile
+  {
+    method: "put",
+    route: "/api/user/update-profile",
+    controller: UserController,
+    middlewares: [checkJwtCognito],
+    action: "updateProfile",
+  },
+  // Change user password
+  {
+    method: "post",
+    route: "/api/user/change-password",
+    controller: UserController,
+    middlewares: [checkJwtCognito],
+    action: "changePassword",
+  },
+  // Delete user profile
+  {
+    method: "delete",
+    route: "/api/user/delete-profile",
+    controller: UserController,
+    middlewares: [checkJwtCognito],
+    action: "deleteProfile",
+  },
   //refresh token
   {
     method: "post",

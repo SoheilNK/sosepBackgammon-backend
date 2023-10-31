@@ -7,6 +7,82 @@ import { CognitoIdentityServiceProvider } from "aws-sdk";
 export class UserController {
   private userRepository = AppDataSource.getRepository(User);
 
+  // Update user profile
+  async updateProfile(
+    request: Request,
+    response: Response,
+    next: NextFunction
+  ) {
+    const { username, email } = request.body;
+
+    try {
+      const user = await this.userRepository.findOneOrFail({
+        where: { username },
+      });
+
+      // Update the user's email or other fields if necessary
+      user.email = email;
+
+      await this.userRepository.save(user);
+      response.status(200).send({ message: "Profile updated successfully" });
+    } catch (error) {
+      response.status(500).send({ message: "Failed to update profile" });
+    }
+  }
+
+  // Change user password
+  async changePassword(
+    request: Request,
+    response: Response,
+    next: NextFunction
+  ) {
+    const { username, newPassword } = request.body;
+
+    // AWS Cognito configuration
+    const cognito = new CognitoIdentityServiceProvider({
+      region: process.env.AWS_REGION,
+    });
+
+    const params = {
+      Password: newPassword,
+      UserPoolId: process.env.COGNITO_USER_POOL_ID,
+      Username: username,
+      Permanent: true,
+    };
+
+    try {
+      await cognito.adminSetUserPassword(params).promise();
+      response.status(200).send({ message: "Password changed successfully" });
+    } catch (error) {
+      console.error(error);
+      response.status(500).send({ message: "Failed to change password" });
+    }
+  }
+
+  // Delete user profile
+  async deleteProfile(
+    request: Request,
+    response: Response,
+    next: NextFunction
+  ) {
+    const { username } = request.body;
+
+    try {
+      const userToRemove = await this.userRepository.findOne({
+        where: { username },
+      });
+
+      if (!userToRemove) {
+        response.status(404).send({ message: "User not found" });
+      } else {
+        await this.userRepository.remove(userToRemove);
+        response.status(204).send({ message: "User has been removed" });
+      }
+    } catch (error) {
+      response.status(500).send({ message: "Failed to remove user" });
+    }
+  }
+
   async getUser(request: Request, response: Response, next: NextFunction) {
     console.log("get user data after checking token");
     let result = response.locals.result;
@@ -110,7 +186,7 @@ export class UserController {
         .send({ message: "An error occurred while removing the user" });
     }
   }
-//to be deleted
+  //to be deleted
   async refreshToken(request: Request, response: Response) {
     const refreshToken = request.body.refresh_token;
     if (!refreshToken) {
