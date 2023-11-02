@@ -67,19 +67,40 @@ export class UserController {
   ) {
     const { username } = request.body;
 
+    // Initialize CognitoIdentityServiceProvider
+    const cognito = new CognitoIdentityServiceProvider({
+      region: process.env.AWS_REGION,
+    });
+
+    const cognitoParams = {
+      UserPoolId: process.env.COGNITO_USER_POOL_ID,
+      Username: username,
+    };
+
     try {
+      // Attempt to delete the user from Cognito user pool
+      console.log("attempt to delete user from Cognito user pool");
+      await cognito.adminDeleteUser(cognitoParams).promise();
+
+      // If successful, continue to delete the user from the local database
+      console.log("attempt to delete user from the local database");
       const userToRemove = await this.userRepository.findOne({
         where: { username },
       });
 
       if (!userToRemove) {
         response.status(404).send({ message: "User not found" });
+        console.log("User not found");
       } else {
         await this.userRepository.remove(userToRemove);
+        console.log("User has been removed");
         response.status(204).send({ message: "User has been removed" });
       }
     } catch (error) {
-      response.status(500).send({ message: "Failed to remove user" });
+      // Handle errors (e.g., user not found in Cognito, or AWS credentials issues)
+      response
+        .status(500)
+        .send({ message: "Error deleting user from Cognito", error });
     }
   }
 
